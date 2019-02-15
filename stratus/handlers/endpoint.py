@@ -13,11 +13,11 @@ class Endpoint:
         return ''.join(random.SystemRandom().choice(tokens) for _ in range(length))
 
     @abc.abstractmethod
-    def request(cls, type: str, **kwargs ) -> Dict: pass
+    def request(self, type: str, **kwargs ) -> Dict: pass
 
     @abc.abstractmethod
-    def epas( cls ) -> List[str]: pass
+    def epas( self ) -> List[str]: pass
 
     @abc.abstractmethod
-    def init( cls ): pass
+    def init( self ): pass
 

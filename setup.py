@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="stratus-endpoint",
-    version="0.0.1",
+    version="0.0.2",
     author="Thomas Maxwell",
     author_email="thomas.maxwell@nasa.gov",
     description="Base classes for creating service endpoints for the Stratus Framework",
