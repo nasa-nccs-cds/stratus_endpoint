@@ -32,8 +32,8 @@ class Endpoint:
 class Task:
     __metaclass__ = abc.ABCMeta
 
-    def __init__( self, **kwargs ):
-        self._status = Status.IDLE
+    def __init__( self, status=Status.IDLE, **kwargs ):
+        self._status = status
         self._parms = kwargs
 
     @abc.abstractmethod
