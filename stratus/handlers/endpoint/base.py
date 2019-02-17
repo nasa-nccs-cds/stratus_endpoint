@@ -1,5 +1,12 @@
 import json, string, random, abc, os
-from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple
+from enum import Enum, auto
+from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
+import xarray as xa
+
+class Status(Enum):
+    IDLE = auto()
+    EXECUTING = auto()
+    COMPLETED = auto()
 
 class Endpoint:
     __metaclass__ = abc.ABCMeta
@@ -20,4 +27,17 @@ class Endpoint:
 
     @abc.abstractmethod
     def init( self ): pass
+
+class Task:
+    __metaclass__ = abc.ABCMeta
+
+    def __init__( self, **kwargs ):
+        self._status = Status.IDLE
+
+    @abc.abstractmethod
+    def getResult(self, timeout=None, block=False) ->  Optional[xa.Dataset]: pass
+
+    @property
+    def status(self) ->  Status:
+        return self._status
 
