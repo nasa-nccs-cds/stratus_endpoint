@@ -7,6 +7,7 @@ class Status(Enum):
     IDLE = auto()
     EXECUTING = auto()
     COMPLETED = auto()
+    ERROR = auto()
 
 class Endpoint:
     __metaclass__ = abc.ABCMeta
@@ -33,6 +34,7 @@ class Task:
 
     def __init__( self, **kwargs ):
         self._status = Status.IDLE
+        self._parms = kwargs
 
     @abc.abstractmethod
     def getResult(self, timeout=None, block=False) ->  Optional[xa.Dataset]: pass
@@ -40,4 +42,6 @@ class Task:
     @property
     def status(self) ->  Status:
         return self._status
+
+    def __getitem__( self, key: str ) -> str: return self._parms.get( key, None )
 
