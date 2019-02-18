@@ -24,7 +24,7 @@ class Endpoint:
     def request(self, type: str, **kwargs ) -> "Task": pass
 
     @abc.abstractmethod
-    def epas( self ) -> List[str]: pass
+    def capabilities(self, type: str, **kwargs ) -> Dict: pass
 
     @abc.abstractmethod
     def init( self ): pass
@@ -32,14 +32,14 @@ class Endpoint:
 class Task:
     __metaclass__ = abc.ABCMeta
 
-    def __init__( self, status=Status.IDLE, **kwargs ):
-        self._status = status
+    def __init__( self, **kwargs ):
+        self._status = kwargs.get( "status", Status.IDLE )
         self._parms = kwargs
 
     @abc.abstractmethod
     def getResult(self, timeout=None, block=False) ->  Optional[xa.Dataset]: pass
 
-    @property
+    @abc.abstractmethod
     def status(self) ->  Status:
         return self._status
 
