@@ -42,7 +42,6 @@ class Task:
     @abc.abstractmethod
     def getResult(self, timeout=None, block=False) ->  Optional[xa.Dataset]: pass
 
-    @abc.abstractmethod
     def status(self) ->  Status:
         return self._status
 
