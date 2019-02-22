@@ -24,6 +24,9 @@ class Endpoint:
     def request(self, type: str, **kwargs ) -> "Task": pass
 
     @abc.abstractmethod
+    def shutdown(self, **kwargs ): pass
+
+    @abc.abstractmethod
     def capabilities(self, type: str, **kwargs ) -> Dict: pass
 
     @abc.abstractmethod
