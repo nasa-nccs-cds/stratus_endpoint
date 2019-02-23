@@ -35,9 +35,14 @@ class Endpoint:
 class Task:
     __metaclass__ = abc.ABCMeta
 
-    def __init__( self, **kwargs ):
+    def __init__( self, taskID: str, **kwargs ):
+        self._taskID = taskID
         self._status = kwargs.get( "status", Status.IDLE )
         self._parms = kwargs
+
+    @property
+    def id(self):
+        return self._taskID
 
     @abc.abstractmethod
     def getResult(self, timeout=None, block=False) ->  Optional[xa.Dataset]: pass
