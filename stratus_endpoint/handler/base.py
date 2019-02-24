@@ -32,6 +32,11 @@ class Endpoint:
     @abc.abstractmethod
     def init( self ): pass
 
+class TaskResult:
+    def __init__(self, header: Dict, data: Optional[xa.Dataset] ):
+        self.header = header
+        self.data = data
+
 class Task:
     __metaclass__ = abc.ABCMeta
 
@@ -45,7 +50,7 @@ class Task:
         return self._taskID
 
     @abc.abstractmethod
-    def getResult(self, timeout=None, block=False) ->  Optional[xa.Dataset]: pass
+    def getResult(self, timeout=None, block=False) ->  Optional[TaskResult]: pass
 
     @property
     def status(self) ->  Status:
