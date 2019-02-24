@@ -33,9 +33,13 @@ class Endpoint:
     def init( self ): pass
 
 class TaskResult:
-    def __init__(self, header: Dict, data: Optional[xa.Dataset] ):
+    def __init__(self, header: Dict, data: Optional[xa.Dataset] = None ):
         self.header = header
         self.data = data
+
+    @property
+    def type(self) -> str:
+        return self.header.get( "type", "")
 
 class Task:
     __metaclass__ = abc.ABCMeta
