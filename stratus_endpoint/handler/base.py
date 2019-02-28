@@ -9,6 +9,17 @@ class Status(Enum):
     COMPLETED = auto()
     ERROR = auto()
 
+    @classmethod
+    def decode( cls, status: str ) -> "Status":
+        toks = status.split(".")
+        assert toks[0].upper() == "STATUS", "Status: attempt to decode a str that is not a status: " + status
+        stat = toks[1].upper()
+        if stat == "IDLE": return cls.IDLE
+        elif stat == "EXECUTING": return cls.EXECUTING
+        elif stat == "COMPLETED": return cls.COMPLETED
+        elif stat == "ERROR": return cls.ERROR
+        raise Exception( "Unrecognized status: " + stat )
+
 class Endpoint:
     __metaclass__ = abc.ABCMeta
 
@@ -52,6 +63,14 @@ class Task:
     @property
     def id(self):
         return self._taskID
+
+    @property
+    def cid(self):
+        return self._taskID.split("-")[0]
+
+    @property
+    def rid(self):
+        return self._taskID.split("-")[1]
 
     @abc.abstractmethod
     def getResult(self, timeout=None, block=False) ->  Optional[TaskResult]: pass
