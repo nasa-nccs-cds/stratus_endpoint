@@ -8,6 +8,7 @@ class Status(Enum):
     EXECUTING = auto()
     COMPLETED = auto()
     ERROR = auto()
+    UNKNOWN = auto()
 
     @classmethod
     def decode( cls, status: str ) -> "Status":
@@ -18,6 +19,7 @@ class Status(Enum):
         elif stat == "EXECUTING":   return cls.EXECUTING
         elif stat == "COMPLETED":   return cls.COMPLETED
         elif stat == "ERROR":       return cls.ERROR
+        elif stat == "UNKNOWN":     return cls.UNKNOWN
         raise Exception( "Unrecognized status: " + stat )
 
 class Endpoint:
