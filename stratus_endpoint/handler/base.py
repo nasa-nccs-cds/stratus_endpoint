@@ -14,10 +14,10 @@ class Status(Enum):
         toks = status.split(".")
         assert toks[0].upper() == "STATUS", "Status: attempt to decode a str that is not a status: " + status
         stat = toks[1].upper()
-        if stat == "IDLE": return cls.IDLE
-        elif stat == "EXECUTING": return cls.EXECUTING
-        elif stat == "COMPLETED": return cls.COMPLETED
-        elif stat == "ERROR": return cls.ERROR
+        if stat == "IDLE":          return cls.IDLE
+        elif stat == "EXECUTING":   return cls.EXECUTING
+        elif stat == "COMPLETED":   return cls.COMPLETED
+        elif stat == "ERROR":       return cls.ERROR
         raise Exception( "Unrecognized status: " + stat )
 
 class Endpoint:
@@ -55,22 +55,22 @@ class TaskResult:
 class Task:
     __metaclass__ = abc.ABCMeta
 
-    def __init__( self, taskID: str, **kwargs ):
-        self._taskID = taskID
+    def __init__( self, sid: str, **kwargs ):
+        self._sid = sid                                      # submission ID
         self._status = kwargs.get( "status", Status.IDLE )
         self._parms = kwargs
 
     @property
-    def id(self):
-        return self._taskID
+    def sid(self):                        # submission ID
+        return self._sid
 
     @property
-    def cid(self):
-        return self._taskID.split("-")[0]
+    def cid(self):                        # client ID
+        return self._sid.split("-")[0]
 
     @property
-    def rid(self):
-        return self._taskID.split("-")[1]
+    def rid(self):                        # request ID
+        return self._sid.split("-")[1]
 
     @abc.abstractmethod
     def getResult(self, timeout=None, block=False) ->  Optional[TaskResult]: pass
@@ -84,9 +84,10 @@ class Task:
 
 class TestTask(Task):
 
-    def __init__(self, taskID: str, request: Dict, **kwargs):
-        Task. __init__(self, taskID, **kwargs)
+    def __init__(self, type: str, request: Dict, **kwargs):
+        Task. __init__(self, request['sid'], **kwargs)
         self.request = request
+        self.type = type
 
     def getResult(self, timeout=None, block=False) -> Optional[TaskResult]:
         header = dict(self.request)
