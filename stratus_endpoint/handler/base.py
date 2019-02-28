@@ -62,3 +62,23 @@ class Task:
 
     def __getitem__( self, key: str ) -> str: return self._parms.get( key, None )
 
+
+class TestTask(Task):
+
+    def __init__(self, taskID: str, request: Dict, **kwargs):
+        Task. __init__(self, taskID, **kwargs)
+        self.request = request
+
+    def getResult(self, timeout=None, block=False) -> Optional[TaskResult]:
+        header = dict(self.request)
+        return TaskResult(header)
+
+
+
+
+
+
+
+
+
+
