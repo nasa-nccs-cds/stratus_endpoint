@@ -77,7 +77,6 @@ class Task:
     @abc.abstractmethod
     def getResult(self, timeout=None, block=False) ->  Optional[TaskResult]: pass
 
-    @property
     def status(self) ->  Status:
         return self._status
 
