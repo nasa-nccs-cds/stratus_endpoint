@@ -13,8 +13,11 @@ class Status(Enum):
     @classmethod
     def decode( cls, status: str ) -> "Status":
         toks = status.split(".")
-        assert toks[0].upper() == "STATUS", "Status: attempt to decode a str that is not a status: " + status
-        stat = toks[1].upper()
+        if len( toks ) > 1:
+            assert toks[0].upper() == "STATUS", "Status: attempt to decode a str that is not a status: " + status
+            stat = toks[1].upper()
+        else:
+            stat = toks[0].upper()
         if stat == "IDLE":          return cls.IDLE
         elif stat == "EXECUTING":   return cls.EXECUTING
         elif stat == "COMPLETED":   return cls.COMPLETED
