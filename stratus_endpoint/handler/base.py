@@ -66,6 +66,10 @@ class Task:
         self._parms = kwargs
 
     @property
+    def id(self):                        # submission ID
+        return self._sid
+
+    @property
     def sid(self):                        # submission ID
         return self._sid
 
