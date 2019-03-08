@@ -49,9 +49,9 @@ class Endpoint:
     def init( self ): pass
 
 class TaskResult:
-    def __init__(self, header: Dict, data: Optional[xa.Dataset] = None ):
+    def __init__(self, header: Dict, data: List[xa.Dataset] = None ):
         self.header = header
-        self.data = data
+        self.data = [] if data is None else data
 
     @property
     def type(self) -> str:
