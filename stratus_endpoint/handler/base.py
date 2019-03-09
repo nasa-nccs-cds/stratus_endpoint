@@ -11,10 +11,10 @@ class Status(Enum):
     UNKNOWN = auto()
 
     @classmethod
-    def decode( cls, status: str ) -> "Status":
-        toks = status.split(".")
+    def decode( cls, _stat: str ) -> "Status":
+        toks = _stat.split(".")
         if len( toks ) > 1:
-            assert toks[0].upper() == "STATUS", "Status: attempt to decode a str that is not a status: " + status
+            assert toks[0].upper() == "STATUS", "Status: attempt to decode a str that is not a status: " + _stat
             stat = toks[1].upper()
         else:
             stat = toks[0].upper()
@@ -60,26 +60,19 @@ class TaskResult:
 class Task:
     __metaclass__ = abc.ABCMeta
 
-    def __init__( self, sid: str, **kwargs ):
-        self._sid = sid                                      # submission ID
+    def __init__( self, rid: str, cid: str, **kwargs ):
+        self._rid = rid
+        self._cid = cid
         self._status = kwargs.get( "status", Status.IDLE )
         self._parms = kwargs
 
     @property
-    def id(self):                        # submission ID
-        return self._sid
-
-    @property
-    def sid(self):                        # submission ID
-        return self._sid
-
-    @property
-    def cid(self):                        # client ID
-        return self._sid.split("-")[0]
-
-    @property
     def rid(self):                        # request ID
-        return self._sid.split("-")[1]
+        return self._rid
+
+    @property
+    def cid(self):                        # request ID
+        return self._cid
 
     @abc.abstractmethod
     def getResult(self, timeout=None, block=False) ->  Optional[TaskResult]: pass
@@ -89,17 +82,9 @@ class Task:
 
     def __getitem__( self, key: str ) -> str: return self._parms.get( key, None )
 
-
-class TestTask(Task):
-
-    def __init__(self, type: str, request: Dict, **kwargs):
-        Task. __init__(self, request['sid'], **kwargs)
-        self.request = request
-        self.type = type
-
-    def getResult(self, timeout=None, block=False) -> Optional[TaskResult]:
-        header = dict(self.request)
-        return TaskResult(header)
+    def __str__(self) -> str:
+        items = dict( rid=self._rid, cid=self._cid, status=self._status)
+        return f"{self.__class__.__name__}{str(items)}"
 
 
 
