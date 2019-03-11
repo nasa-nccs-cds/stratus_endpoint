@@ -63,7 +63,6 @@ class Task:
     def __init__( self, rid: str, cid: str, **kwargs ):
         self._rid = rid
         self._cid = cid
-        self._status = kwargs.get( "status", Status.IDLE )
         self._parms = kwargs
 
     @property
@@ -77,13 +76,13 @@ class Task:
     @abc.abstractmethod
     def getResult(self, timeout=None, block=False) ->  Optional[TaskResult]: pass
 
-    def status(self) ->  Status:
-        return self._status
+    @abc.abstractmethod
+    def status(self) ->  Status: pass
 
     def __getitem__( self, key: str ) -> str: return self._parms.get( key, None )
 
     def __str__(self) -> str:
-        items = dict( rid=self._rid, cid=self._cid, status=self._status)
+        items = dict( rid=self._rid, cid=self._cid, status=self.status())
         return f"{self.__class__.__name__}{str(items)}"
 
 
