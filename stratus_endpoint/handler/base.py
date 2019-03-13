@@ -64,6 +64,7 @@ class Task:
         self._rid = rid
         self._cid = cid
         self._parms = kwargs
+        self._clients = kwargs.get("clients","").split(",")
 
     @property
     def rid(self):                        # request ID
@@ -72,6 +73,9 @@ class Task:
     @property
     def cid(self):                        # request ID
         return self._cid
+
+    def hasClient(self, cid: str ) -> bool:
+        return cid in self._clients
 
     @abc.abstractmethod
     def getResult(self, timeout=None, block=False) ->  Optional[TaskResult]: pass
