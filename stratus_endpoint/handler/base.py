@@ -25,6 +25,10 @@ class Status(Enum):
         elif stat == "UNKNOWN":     return cls.UNKNOWN
         raise Exception( "Unrecognized status: " + stat )
 
+    @classmethod
+    def str( cls, _stat: "Status" ) -> str:
+        return str(_stat).lower().split(".")[1]
+
 class Endpoint:
     __metaclass__ = abc.ABCMeta
 
