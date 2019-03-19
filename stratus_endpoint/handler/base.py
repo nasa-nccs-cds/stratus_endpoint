@@ -55,7 +55,7 @@ class Endpoint:
 class TaskResult:
     def __init__(self, header: Dict, data: List[xa.Dataset] = None ):
         self.header = header
-        self.data = [] if data is None else data
+        self.data: List[xa.Dataset] = [] if data is None else data
 
     @property
     def type(self) -> str:
