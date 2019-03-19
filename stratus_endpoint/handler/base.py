@@ -57,6 +57,12 @@ class TaskResult:
         self.header = header
         self.data: List[xa.Dataset] = [] if data is None else data
 
+    def popDataset(self) -> xa.Dataset:
+        return self.data.pop(0)
+
+    def empty(self) -> bool:
+        return len(self.data) > 0
+
     @property
     def type(self) -> str:
         return self.header.get( "type", "")
