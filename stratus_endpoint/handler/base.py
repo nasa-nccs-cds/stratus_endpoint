@@ -57,7 +57,8 @@ class TaskResult:
         self.header = header
         self.data: List[xa.Dataset] = [] if data is None else data
 
-    def popDataset(self) -> xa.Dataset:
+    def popDataset(self) -> Optional[xa.Dataset]:
+        if self.empty(): return None
         return self.data.pop(0)
 
     def empty(self) -> bool:
