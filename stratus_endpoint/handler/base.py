@@ -62,7 +62,7 @@ class TaskResult:
         return self.data.pop(0)
 
     def empty(self) -> bool:
-        return len(self.data) > 0
+        return len(self.data) == 0
 
     def size(self) -> int:
         return len(self.data)
