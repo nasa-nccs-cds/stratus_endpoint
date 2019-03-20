@@ -98,7 +98,7 @@ class Task:
         return cid in self._clients
 
     @abc.abstractmethod
-    def getResult(self, timeout=None, block=False) ->  Optional[TaskResult]: pass
+    def getResult( self, **kwargs ) ->  Optional[TaskResult]: pass
 
     @abc.abstractmethod
     def status(self) ->  Status: pass
