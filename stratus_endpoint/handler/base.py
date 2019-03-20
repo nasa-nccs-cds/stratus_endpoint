@@ -70,6 +70,9 @@ class TaskResult:
     def __len__(self):
         return len(self.data)
 
+    def __str__(self):
+        return f"TR{str({**self.header,'size':self.size()})}"
+
     @property
     def type(self) -> str:
         return self.header.get( "type", "")
