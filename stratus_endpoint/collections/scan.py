@@ -51,19 +51,20 @@ class  FileScanner:
             for path in paths:
                 frec = FileRec( path )
                 self.varPaths.setdefault( frec.varsKey, [] ).append( frec )
-            for varKey, varPathList in self.varPaths.items():
-                base = os.path.commonprefix([ os.path.dirname(path) for path in varPathList ] )
-                files = [path[len(base):] for path in varPathList ]
-                agg = Aggregation( base, len(varPathList), files )
+            for varKey, frecList in self.varPaths.items():
+                base = os.path.commonprefix( [ os.path.dirname(frec.path) for frec in frecList ] )
+                files = [ frec.path[len(base):] for frec in frecList ]
+                agg = Aggregation( base, files, frecList )
                 self.aggs[ varKey ] = agg
         else: raise Exception( "No files found")
 
 class Aggregation:
 
-    def __init__(self, base: str, nFiles: int, files: List[str] ):
+    def __init__(self, base: str, files: List[str], frecList: List[FileRec] ):
         self.paths = {}
         self.files = files
-        self.nFiles = nFiles
+        self.nFiles = len(files)
+        self.fileRecs = frecList
         self.base = base
         self.partition()
 
