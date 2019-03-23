@@ -9,7 +9,16 @@ class FileRec:
         vars_list = list(dataset.variables.keys())
         vars_list.sort()
         self.varsKey = ",".join(vars_list)
-        dataset.get_variables_by_attributes()
+        time_var = dataset.variables["time"]
+        time_data = time_var[:]
+        if len(time_data) > 1:
+            dt = time_data[1] - time_data[0]
+            self.start_date = num2date(time_data[0], time_var.units, dataset.calendar)
+            self.end_date = num2date(time_data[-1] + dt, time_var.units, dataset.calendar)
+        else:
+            self.start_date = num2date(time_data[0], time_var.units, dataset.calendar)
+            self.end_date = self.start_date
+        print(f"FileRec:  -[{self.start_date}]-  -[{self.end_date}]-  {self.path} ")
 
 
 class  FileScanner:
@@ -40,21 +49,8 @@ class  FileScanner:
             print( "Scanning globs:" + str(globs) )
             paths = glob.glob( *globs, recursive=True)
             for path in paths:
-                dataset = Dataset( path )
-                time_var = dataset.variables["time"]
-                time_data = time_var[:]
-                if len( time_data ) > 1:
-                    dt = time_data[1] - time_data[0]
-                    start_date = num2date(time_data[0],time_var.units,dataset.calendar)
-                    end_date =  num2date(time_data[-1] + dt, time_var.units, dataset.calendar )
-                else:
-                    start_date = num2date(time_data[0], time_var.units, dataset.calendar)
-                    end_date = start_date
-                print( f"Dataset:  -[{start_date}]-  -[{end_date}]-  {path} " )
-                vars_list = list(dataset.variables.keys())
-                vars_list.sort()
-                varsKey = ",".join( vars_list )
-                self.varPaths.setdefault( varsKey, [] ).append( path )
+                frec = FileRec( path )
+                self.varPaths.setdefault( frec.varsKey, [] ).append( frec )
             for varKey, varPathList in self.varPaths.items():
                 base = os.path.commonprefix([ os.path.dirname(path) for path in varPathList ] )
                 files = [path[len(base):] for path in varPathList ]
