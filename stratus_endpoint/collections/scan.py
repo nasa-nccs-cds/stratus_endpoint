@@ -1,7 +1,9 @@
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
 from netCDF4 import Dataset, num2date
+from functools import total_ordering
 import os, glob, yaml
 
+@total_ordering
 class FileRec:
     def __init__(self, path ):
         self.path = path
@@ -11,6 +13,7 @@ class FileRec:
         self.varsKey = ",".join(vars_list)
         time_var = dataset.variables["time"]
         time_data = time_var[:]
+        self.time_value = time_data[0]
         if len(time_data) > 1:
             dt = time_data[1] - time_data[0]
             self.start_date = num2date(time_data[0], time_var.units, dataset.calendar)
@@ -18,7 +21,22 @@ class FileRec:
         else:
             self.start_date = num2date(time_data[0], time_var.units, dataset.calendar)
             self.end_date = self.start_date
-        print(f"FileRec:  -[{self.start_date}]-  -[{self.end_date}]-  {self.path} ")
+
+    def __eq__(self, other) -> bool:
+        return self.time_value == other.time_value
+
+    def __ne__(self, other) -> bool:
+        return not (self.time_value == other.time_value)
+
+    def __lt__(self, other):
+        return self.time_value < other.time_value
+
+    def __str__(self):
+        return  f"fREC -[{self.start_date}]-  -[{self.end_date}]-  {self.path} "
+
+    @staticmethod
+    def time( frec: "FileRec" ):
+        return frec.time_value
 
 
 class  FileScanner:
@@ -52,6 +70,7 @@ class  FileScanner:
                 frec = FileRec( path )
                 self.varPaths.setdefault( frec.varsKey, [] ).append( frec )
             for varKey, frecList in self.varPaths.items():
+                frecList.sort(key=FileRec.time)
                 base = os.path.commonprefix( [ os.path.dirname(frec.path) for frec in frecList ] )
                 files = [ frec.path[len(base):] for frec in frecList ]
                 agg = Aggregation( base, files, frecList )
@@ -66,6 +85,8 @@ class Aggregation:
         self.nFiles = len(files)
         self.fileRecs = frecList
         self.base = base
+        frecs = "\n".join([str(frec) for frec in self.fileRecs])
+        print( f"Aggregation: {frecs}" )
         self.partition()
 
     def __str__(self):
