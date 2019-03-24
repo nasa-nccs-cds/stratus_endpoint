@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tupl
 from netCDF4 import Dataset, num2date, Variable
 from functools import total_ordering
 import dateutil.parser
-import os, glob, yaml, cftime, datetime
+import os, glob, yaml, cftime, datetime, argparse
 
 @total_ordering
 class FileRec:
@@ -54,21 +54,21 @@ class FileRec:
 
 class  FileScanner:
 
-    def __init__(self, **kwargs ):
+    def __init__(self, collectionId: str, **kwargs ):
         self.aggs = {}
         self.varPaths = {}
+        self.collectionId = collectionId
+        print( f"Running FileScanner with args: {kwargs}")
         self.scan( **kwargs )
 
     def __str__(self):
         aggs = [ f"---> {varId}:\n{agg}" for varId,agg in self.aggs.items() ]
         return "\n".join( aggs )
 
-    def varKey(self, path: str ) -> str:
-        pass
-
     def scan( self, **kwargs ):
-        glob1 =  kwargs.get( "glob", None )
-        globs: List[str] = kwargs.get( "globs", [] )
+        glob1 =  kwargs.get( "glob" )
+        globsArg =  kwargs.get( "globs" )
+        globs: List[str] = [] if globsArg is None else globsArg.split(",")
         if glob1 is not None: globs.append(glob1)
         path = kwargs.get("path",None)
         if path is not None:
@@ -93,26 +93,51 @@ class  FileScanner:
                 self.aggs[ varKey ] = agg
         else: raise Exception( "No files found")
 
+    def write( self, collectionsDir: str ):
+        baseDir = os.path.expanduser(collectionsDir)
+        os.makedirs( baseDir, exist_ok=True )
+        collectionsFile = f"{baseDir}/{self.collectionId}.csv"
+        lines = []
+        with open( collectionsFile, 'w' ) as f:
+            for aggId,agg in self.aggs.items():
+                aggFile = f"{baseDir}/{agg.getId(self.collectionId)}.ag1"
+                agg.write( aggFile )
+                lines.append(f"# title, {self.collectionId}\n")
+                lines.append(f"# dir, {baseDir}\n")
+                lines.append(f"# format, ag1\n")
+                for var in agg.vars:
+                    lines.append( f"{var}, {aggFile}\n")
+            f.writelines(lines)
+
 # From EDAS: writeAggregation
 class Aggregation:
 
     def __init__(self, base: str, frecList: List[FileRec], nTs: int ):
-        self.paths = {}
+
         self.nFiles = len(frecList)
         self.fileRecs = frecList
         self.base = base
         self.nTs = nTs
-        self.partition()
         self.vars = set()
+        self.paths = self.partition()
+        self.lines = self.process()
+
+    def varKey(self):
+        return "--".join(self.vars)
+
+    def getId(self, collectionId: str ):
+        return collectionId + "--" + self.varKey()
 
     def __str__(self):
         return f"FileScanner[{self.nFiles}]: \n\tbase = {self.base}\n\tpaths = {self.paths}\n\t"
 
     def partition( self ):
+        paths = {}
         for frec in self.fileRecs:
             basePath = os.path.dirname(frec.relPath)
-            fileList = self.paths.setdefault(basePath,[])
+            fileList = paths.setdefault(basePath,[])
             fileList.append( frec.relPath[len(basePath):].strip("/") )
+        return paths
 
     def filePath(self, index: int = 0 ) -> str:
         return f"{self.base}/{self.fileRecs[index].relPath}"
@@ -129,48 +154,62 @@ class Aggregation:
         return yaml.dump(collection)
 
     def write(self, filePath: str ):
+        with open( filePath, 'w' ) as f:
+            f.writelines( self.lines )
+
+    def process(self):
         dataset = Dataset(self.filePath())
         nc_dims = [dim for dim in dataset.dimensions]
         nc_vars = [var for var in dataset.variables]
         lines = []
-        with open( filePath, 'w' ) as f:
-            lines.append(f'P; base.path; {self.base}\n')
-            lines.append(f'P; num.files; {self.nFiles}\n')
-            lines.append(f'P; time.nrows; {self.nTs}\n')
-            lines.append(f'P; time.start; {self.fileRecs[0].start_time_value}\n')
-            lines.append(f'P; time.end; {self.fileRecs[-1].end_time_value}\n')
-            lines.append(f'P; time.calendar; {dataset.calendar}\n')
-            for attr_name in dataset.ncattrs():
-                lines.append(f'P; {attr_name}; {dataset.getncattr(attr_name)}\n')
-            for vname in nc_vars:
-                if vname not in nc_dims:
-                    self.vars.add(vname)
-                    var: Variable = dataset.variables[vname]
-                    dims = var.dimensions
-                    shape = [ str(self.nTs) if dims[iDim] == "time" else str(var.shape[iDim]) for iDim in range(len(dims)) ]
-                    lines.append(f'V; {vname}; {var.long_name}; {var.long_name}; {var.comments}; {",".join(shape)}; {1.0}; {" ".join(dims)}; {var.units}\n')
-            for vname in nc_vars:
-                if vname in nc_dims:
-                    coord: Variable = dataset.variables[vname]
-                    lvname = vname.lower()
-                    if lvname == "time":
-                        lines.append(f'C; {vname} {self.nTs}\n')
-                        lines.append(f'A; {vname}; {vname}; T; {str(self.nTs)}; minutes since 1970-01-01T00:00:00Z; {self.fileRecs[0].start_time_value}; {self.fileRecs[-1].end_time_value}\n')
-                    else:
-                        lines.append(f'C; {vname} {coord.shape[0]}\n')
-                        cdata = coord[:]
-                        ctype = "?"
-                        shape = [ str(s) for s in coord.shape ]
-                        if   lvname.startswith("lat"): ctype = "Y"
-                        elif lvname.startswith("lon"): ctype = "X"
-                        elif lvname.startswith("lev") or lvname.startswith("plev"): ctype = "Z"
-                        lines.append(f'A; {vname}; {vname}; {ctype}; {",".join(shape)}; {coord.units}; {cdata[0]}; {cdata[-1]}\n')
-            for frec in self.fileRecs:
-                lines.append(f'F; {frec.start_time_value}; {frec.size}; {frec.relPath}\n')
-            f.writelines( lines )
+        lines.append(f'P; base.path; {self.base}\n')
+        lines.append(f'P; num.files; {self.nFiles}\n')
+        lines.append(f'P; time.nrows; {self.nTs}\n')
+        lines.append(f'P; time.start; {self.fileRecs[0].start_time_value}\n')
+        lines.append(f'P; time.end; {self.fileRecs[-1].end_time_value}\n')
+        lines.append(f'P; time.calendar; {dataset.calendar}\n')
+        for attr_name in dataset.ncattrs():
+            lines.append(f'P; {attr_name}; {dataset.getncattr(attr_name)}\n')
+        for vname in nc_vars:
+            if vname not in nc_dims:
+                self.vars.add(vname)
+                var: Variable = dataset.variables[vname]
+                dims = var.dimensions
+                shape = [ str(self.nTs) if dims[iDim] == "time" else str(var.shape[iDim]) for iDim in range(len(dims)) ]
+                lines.append(f'V; {vname}; {var.long_name}; {var.long_name}; {var.comments}; {",".join(shape)}; {1.0}; {" ".join(dims)}; {var.units}\n')
+        for vname in nc_vars:
+            if vname in nc_dims:
+                coord: Variable = dataset.variables[vname]
+                lvname = vname.lower()
+                if lvname == "time":
+                    lines.append(f'C; {vname} {self.nTs}\n')
+                    lines.append(f'A; {vname}; {vname}; T; {str(self.nTs)}; minutes since 1970-01-01T00:00:00Z; {self.fileRecs[0].start_time_value}; {self.fileRecs[-1].end_time_value}\n')
+                else:
+                    lines.append(f'C; {vname} {coord.shape[0]}\n')
+                    cdata = coord[:]
+                    ctype = "?"
+                    shape = [ str(s) for s in coord.shape ]
+                    if   lvname.startswith("lat"): ctype = "Y"
+                    elif lvname.startswith("lon"): ctype = "X"
+                    elif lvname.startswith("lev") or lvname.startswith("plev"): ctype = "Z"
+                    lines.append(f'A; {vname}; {vname}; {ctype}; {",".join(shape)}; {coord.units}; {cdata[0]}; {cdata[-1]}\n')
+        for frec in self.fileRecs:
+            lines.append(f'F; {frec.start_time_value}; {frec.size}; {frec.relPath}\n')
+        return lines
+
 
 if __name__ == "__main__":
-    scanner2 = FileScanner( path="/Users/tpmaxwel/Dropbox/Tom/Data/MERRA/DAILY", ext="nc" )
-    print( scanner2 )
-    aggs = list(scanner2.aggs.values())
-    aggs[0].write( "/tmp/test_collection.csv")
+    parser = argparse.ArgumentParser( description='Scan the file system to create a collection', prog="cscan", epilog="Must set the environment variable 'HPDA_COLLECTIONS_DIR'\n" )
+    parser.add_argument('collectionName', help='A name for the collection')
+    parser.add_argument('-path', help='The top level directory containing all files for the collection')
+    parser.add_argument('-ext', help="The file extension for all files in the collection (used only with '-path', default: nc)", default="nc")
+    parser.add_argument('-globs', help='A comma-separated list of unix file system globs for selecting files in the collection')
+    parser.add_argument('-glob', help='A single unix file system glob for selecting files in the collection')
+    args = parser.parse_args()
+    scanner = FileScanner( args.collectionName, **vars(args) )
+    collectionsDir = os.environ.get('HPDA_COLLECTIONS_DIR')
+    assert collectionsDir is not None, "Must set the HPDA_COLLECTIONS_DIR environment variable"
+    scanner.write( collectionsDir )
+
+#    scanner2 = FileScanner( path="/Users/tpmaxwel/Dropbox/Tom/Data/MERRA/DAILY", ext="nc" )
+
