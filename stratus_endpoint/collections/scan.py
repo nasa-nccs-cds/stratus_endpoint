@@ -1,42 +1,55 @@
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
-from netCDF4 import Dataset, num2date
+from netCDF4 import Dataset, num2date, Variable
 from functools import total_ordering
-import os, glob, yaml
+import dateutil.parser
+import os, glob, yaml, cftime, datetime
 
 @total_ordering
 class FileRec:
     def __init__(self, path ):
         self.path = path
         dataset = Dataset(path)
+        self.units = "minutes since 1970-01-01T00:00:00Z"
+        self.relPath = None
+        self.base_date = datetime.datetime(1970,1,1,1,1,1)
         vars_list = list(dataset.variables.keys())
         vars_list.sort()
         self.varsKey = ",".join(vars_list)
         time_var = dataset.variables["time"]
         time_data = time_var[:]
-        self.time_value = time_data[0]
         if len(time_data) > 1:
             dt = time_data[1] - time_data[0]
-            self.start_date = num2date(time_data[0], time_var.units, dataset.calendar)
-            self.end_date = num2date(time_data[-1] + dt, time_var.units, dataset.calendar)
+            self.start_date: cftime.real_datetime = num2date(time_data[0], time_var.units, dataset.calendar)
+            self.end_date: cftime.real_datetime = num2date(time_data[-1] + dt, time_var.units, dataset.calendar)
         else:
-            self.start_date = num2date(time_data[0], time_var.units, dataset.calendar)
-            self.end_date = self.start_date
+            self.start_date: cftime.real_datetime = num2date(time_data[0], time_var.units, dataset.calendar)
+            self.end_date: cftime.real_datetime = self.start_date
+        self.start_time_value = self.getTimeValue( self.start_date )
+        self.end_time_value = self.getTimeValue( self.end_date )
+        self.size = len(time_data)
 
-    def __eq__(self, other) -> bool:
-        return self.time_value == other.time_value
+    def getTimeValue(self, date: cftime.real_datetime) -> int:
+        offset = date - self.base_date
+        return offset.days * 24 * 60 + int(round(offset.seconds/60))
 
-    def __ne__(self, other) -> bool:
-        return not (self.time_value == other.time_value)
+    def setBase(self, base: str ):
+        self.relPath = self.path[len(base):]
 
-    def __lt__(self, other):
-        return self.time_value < other.time_value
+    def __eq__(self, other: "FileRec") -> bool:
+        return self.start_time_value == other.start_time_value
+
+    def __ne__(self, other: "FileRec") -> bool:
+        return not (self.start_time_value == other.start_time_value)
+
+    def __lt__(self, other: "FileRec"):
+        return self.start_time_value < other.start_time_value
 
     def __str__(self):
         return  f"fREC -[{self.start_date}]-  -[{self.end_date}]-  {self.path} "
 
     @staticmethod
     def time( frec: "FileRec" ):
-        return frec.time_value
+        return frec.start_time_value
 
 
 class  FileScanner:
@@ -70,36 +83,38 @@ class  FileScanner:
                 frec = FileRec( path )
                 self.varPaths.setdefault( frec.varsKey, [] ).append( frec )
             for varKey, frecList in self.varPaths.items():
-                frecList.sort(key=FileRec.time)
+                frecList.sort()
                 base = os.path.commonprefix( [ os.path.dirname(frec.path) for frec in frecList ] )
-                files = [ frec.path[len(base):] for frec in frecList ]
-                agg = Aggregation( base, files, frecList )
+                size = 0
+                for frec in frecList:
+                    size += frec.size
+                    frec.setBase(base)
+                agg = Aggregation( base, frecList, size )
                 self.aggs[ varKey ] = agg
         else: raise Exception( "No files found")
 
 class Aggregation:
 
-    def __init__(self, base: str, files: List[str], frecList: List[FileRec] ):
+    def __init__(self, base: str, frecList: List[FileRec], nTs: int ):
         self.paths = {}
-        self.files = files
-        self.nFiles = len(files)
+        self.nFiles = len(frecList)
         self.fileRecs = frecList
         self.base = base
-        frecs = "\n".join([str(frec) for frec in self.fileRecs])
-        print( f"Aggregation: {frecs}" )
+        self.nTs = nTs
         self.partition()
+        self.vars = set()
 
     def __str__(self):
         return f"FileScanner[{self.nFiles}]: \n\tbase = {self.base}\n\tpaths = {self.paths}\n\t"
 
     def partition( self ):
-        for relPath in self.files:
-            basePath = os.path.dirname(relPath)
+        for frec in self.fileRecs:
+            basePath = os.path.dirname(frec.relPath)
             fileList = self.paths.setdefault(basePath,[])
-            fileList.append( relPath[len(basePath):].strip("/") )
+            fileList.append( frec.relPath[len(basePath):].strip("/") )
 
     def filePath(self, index: int = 0 ) -> str:
-        return f"{self.base}/{self.files[index]}"
+        return f"{self.base}/{self.fileRecs[index].relPath}"
 
     def yaml(self):
         collection = {}
@@ -113,20 +128,59 @@ class Aggregation:
         return yaml.dump(collection)
 
     def write(self, filePath: str ):
+        dataset = Dataset(self.filePath())
+        nc_dims = [dim for dim in dataset.dimensions]
+        nc_vars = [var for var in dataset.variables]
+        lines = []
         with open( filePath, 'w' ) as f:
-            f.write(f'P; base.path; {self.base}')
-            f.write(f'P; num.files; {self.nFiles}')
-
-# bw.write( s"P; time.nrows; ${nTimeSteps}\n")
-# bw.write( s"P; time.start; ${startTime}\n")
-# bw.write( s"P; time.end; ${endTime}\n")
-# bw.write( s"P; time.calendar; ${calendar.name}\n")
+            lines.append(f'P; base.path; {self.base}\n')
+            lines.append(f'P; num.files; {self.nFiles}\n')
+            lines.append(f'P; time.nrows; {self.nTs}\n')
+            lines.append(f'P; time.start; {self.fileRecs[0].start_time_value}\n')
+            lines.append(f'P; time.end; {self.fileRecs[-1].end_time_value}\n')
+            lines.append(f'P; time.calendar; {dataset.calendar}\n')
+            for attr_name in dataset.ncattrs():
+                lines.append(f'P; {attr_name}; {dataset.getncattr(attr_name)}\n')
+            for vname in nc_vars:
+                if vname not in nc_dims:
+                    self.vars.add(vname)
+                    var: Variable = dataset.variables[vname]
+                    dims = var.dimensions
+                    shape = [ str(self.nTs) if dims[iDim] == "time" else str(var.shape[iDim]) for iDim in range(len(dims)) ]
+                    lines.append(f'V; {vname}; {var.long_name}; {var.long_name}; {var.comments}; {",".join(shape)}; {1.0}; {" ".join(dims)}; {var.units}\n')
+            for vname in nc_vars:
+                if vname in nc_dims:
+                    coord: Variable = dataset.variables[vname]
+                    lvname = vname.lower()
+                    if lvname == "time":
+                        lines.append(f'C; {vname} {self.nTs}\n')
+                        lines.append(f'A; {vname}; {vname}; T; {str(self.nTs)}; minutes since 1970-01-01T00:00:00Z; {self.fileRecs[0].start_time_value}; {self.fileRecs[-1].end_time_value}\n')
+                    else:
+                        lines.append(f'C; {vname} {coord.shape[0]}\n')
+                        cdata = coord[:]
+                        ctype = "?"
+                        shape = [ str(s) for s in coord.shape ]
+                        if   lvname.startswith("lat"): ctype = "Y"
+                        elif lvname.startswith("lon"): ctype = "X"
+                        elif lvname.startswith("lev") or lvname.startswith("plev"): ctype = "Z"
+                        lines.append(f'A; {vname}; {vname}; {ctype}; {",".join(shape)}; {coord.units}; {cdata[0]}; {cdata[-1]}\n')
+            for frec in self.fileRecs:
+                lines.append(f'F; {frec.start_time_value}; {frec.size}; {frec.relPath}\n')
+            f.writelines( lines )
 
 if __name__ == "__main__":
     scanner2 = FileScanner( path="/Users/tpmaxwel/Dropbox/Tom/Data/MERRA/DAILY", ext="nc" )
     print( scanner2 )
+    aggs = list(scanner2.aggs.values())
+    aggs[0].write( "/tmp/test_collection.csv")
 
 
+
+# for (coordAxis < - fileMetadata.coordinateAxes; ctype = coordAxis.getAxisType.getCFAxisName ) {
+# if (ctype.equals("Z") )      {bw.write( s"A; ${coordAxis.getShortName}; ${coordAxis.getDODSName}; $ctype; ${coordAxis.getShape.mkString(", ")}; ${coordAxis.getUnitsString};  ${coordAxis.getMinValue}; ${coordAxis.getMaxValue}\n")}
+# else if (ctype.equals("T") ) {bw.write( s"A; ${coordAxis.getShortName}; ${coordAxis.getDODSName}; $ctype; ${nTimeSteps}; ${coordAxis.getUnitsString};  ${startTime}; ${endTime}\n")}
+# else {bw.write( s"A; ${coordAxis.getShortName}; ${coordAxis.getDODSName}; $ctype; ${coordAxis.getShape.mkString(", ")}; ${coordAxis.getUnitsString};  ${coordAxis.getMinValue}; ${coordAxis.getMaxValue}\n" )}
+# }
 
 
 # def writeAggregation(aggFile: File, fileHeaders: IndexedSeq[FileHeader], format: String, maxCores: Int = 8): Unit = {
@@ -158,24 +212,6 @@ if __name__ == "__main__":
 # logger.info(" ")
 # try {
 
-
-# for (attr < - fileMetadata.attributes ) {bw.write( s"P; ${attr.getFullName}; ${attr.getStringValue} \n")}
-# for (coordAxis < - fileMetadata.coordinateAxes; ctype = coordAxis.getAxisType.getCFAxisName ) {
-# if (ctype.equals("Z") )      {bw.write( s"A; ${coordAxis.getShortName}; ${coordAxis.getDODSName}; $ctype; ${coordAxis.getShape.mkString(", ")}; ${coordAxis.getUnitsString};  ${coordAxis.getMinValue}; ${coordAxis.getMaxValue}\n")}
-# else if (ctype.equals("T") ) {bw.write( s"A; ${coordAxis.getShortName}; ${coordAxis.getDODSName}; $ctype; ${nTimeSteps}; ${coordAxis.getUnitsString};  ${startTime}; ${endTime}\n")}
-# else {bw.write( s"A; ${coordAxis.getShortName}; ${coordAxis.getDODSName}; $ctype; ${coordAxis.getShape.mkString(", ")}; ${coordAxis.getUnitsString};  ${coordAxis.getMinValue}; ${coordAxis.getMaxValue}\n" )}
-# }
-# for (cVar < - fileMetadata.coordVars) {
-# if ( cVar.getShortName.toLowerCase.startsWith("tim") ) {
-# bw.write(s"C; ${cVar.getShortName};  ${nTimeSteps} \n")
-# } else {
-# bw.write(s"C; ${cVar.getShortName};  ${cVar.getShape.mkString(", ")} \n")
-# }
-# }
-# for (variable < - fileMetadata.variables) {bw.write( s"V; ${variable.getShortName}; ${variable.getFullName}; ${variable.getDODSName};  ${variable.getDescription};  ${getShapeStr(variable.getDimensionsString,nTimeSteps,variable.getShape)}; ${resolution}; ${variable.getDimensionsString};  ${variable.getUnitsString} \n" )}
-# for (fileHeader < - fileHeaders) {
-# bw.write( s"F; ${EDTime.toString(fileHeader.startValue)}; ${fileHeader.nElem.toString}; ${fileHeader.relFile}\n" )
-# }
 # } finally {
 # fileMetadata.close
 # }
