@@ -93,6 +93,7 @@ class  FileScanner:
                 self.aggs[ varKey ] = agg
         else: raise Exception( "No files found")
 
+# From EDAS: writeAggregation
 class Aggregation:
 
     def __init__(self, base: str, frecList: List[FileRec], nTs: int ):
@@ -173,51 +174,3 @@ if __name__ == "__main__":
     print( scanner2 )
     aggs = list(scanner2.aggs.values())
     aggs[0].write( "/tmp/test_collection.csv")
-
-
-
-# for (coordAxis < - fileMetadata.coordinateAxes; ctype = coordAxis.getAxisType.getCFAxisName ) {
-# if (ctype.equals("Z") )      {bw.write( s"A; ${coordAxis.getShortName}; ${coordAxis.getDODSName}; $ctype; ${coordAxis.getShape.mkString(", ")}; ${coordAxis.getUnitsString};  ${coordAxis.getMinValue}; ${coordAxis.getMaxValue}\n")}
-# else if (ctype.equals("T") ) {bw.write( s"A; ${coordAxis.getShortName}; ${coordAxis.getDODSName}; $ctype; ${nTimeSteps}; ${coordAxis.getUnitsString};  ${startTime}; ${endTime}\n")}
-# else {bw.write( s"A; ${coordAxis.getShortName}; ${coordAxis.getDODSName}; $ctype; ${coordAxis.getShape.mkString(", ")}; ${coordAxis.getUnitsString};  ${coordAxis.getMinValue}; ${coordAxis.getMaxValue}\n" )}
-# }
-
-
-# def writeAggregation(aggFile: File, fileHeaders: IndexedSeq[FileHeader], format: String, maxCores: Int = 8): Unit = {
-#     DiskCacheFileMgr.validatePathFile(aggFile)
-#
-#
-# logger.info(s
-# "Writing Aggregation[$format] File: " + aggFile.toString)
-# val
-# nReadProcessors = Math.min(Runtime.getRuntime.availableProcessors, maxCores)
-# logger.info("Processing %d files with %d workers".format(fileHeaders.length, nReadProcessors))
-# val
-# bw = new
-# BufferedWriter(new
-# FileWriter(aggFile))
-# val
-# startTime = fileHeaders.head.startValue
-# val
-# calendar = fileHeaders.head.calendar
-# val
-# endTime = fileHeaders.last.endValue
-# val
-# nTimeSteps: Int = fileHeaders.foldLeft(0)(_ + _.nElem)
-# val
-# resolution = fileHeaders.head.resolution.map(item= > s
-# "${item._1}:${item._2.toString}").mkString(",")
-# val
-# fileMetadata = FileMetadata(fileHeaders.head.toPath.toString, nTimeSteps)
-# logger.info(" ")
-# try {
-
-# } finally {
-# fileMetadata.close
-# }
-# bw.close()
-# }
-
-
-
-
