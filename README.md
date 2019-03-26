@@ -3,6 +3,12 @@ Base classes for creating service endpoints for the [Stratus Framework](https://
 
 These classes wrap python services for integration with other services using Stratus.
 
+### Conda environment setup
+
+```
+ >> conda create -n stratus -c conda-forge python=3.6 libnetcdf netCDF4
+ ```
+
 ### Installation
 
 ```

@@ -1,7 +1,6 @@
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
 from netCDF4 import Dataset, num2date, Variable
 from functools import total_ordering
-import dateutil.parser
 import os, glob, yaml, cftime, datetime, argparse
 
 @total_ordering
