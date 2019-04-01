@@ -11,6 +11,7 @@ class FileRec:
         self.units = "minutes since 1970-01-01T00:00:00Z"
         self.relPath = None
         self.base_date = datetime.datetime(1970,1,1,1,1,1)
+        self.calendar = dataset.calendar if hasattr(dataset, 'calendar') else "standard"
         vars_list = list(dataset.variables.keys())
         vars_list.sort()
         self.varsKey = ",".join(vars_list)
@@ -18,10 +19,10 @@ class FileRec:
         time_data = time_var[:]
         if len(time_data) > 1:
             dt = time_data[1] - time_data[0]
-            self.start_date: cftime.real_datetime = num2date(time_data[0], time_var.units, dataset.calendar)
-            self.end_date: cftime.real_datetime = num2date(time_data[-1] + dt, time_var.units, dataset.calendar)
+            self.start_date: cftime.real_datetime = num2date(time_data[0], time_var.units, self.calendar)
+            self.end_date: cftime.real_datetime = num2date(time_data[-1] + dt, time_var.units, self.calendar)
         else:
-            self.start_date: cftime.real_datetime = num2date(time_data[0], time_var.units, dataset.calendar)
+            self.start_date: cftime.real_datetime = num2date(time_data[0], time_var.units, self.calendar)
             self.end_date: cftime.real_datetime = self.start_date
         self.start_time_value = self.getTimeValue( self.start_date )
         self.end_time_value = self.getTimeValue( self.end_date )
@@ -158,6 +159,7 @@ class Aggregation:
 
     def process(self):
         dataset = Dataset(self.filePath())
+        calendar = dataset.calendar if hasattr(dataset, 'calendar') else "standard"
         nc_dims = [dim for dim in dataset.dimensions]
         nc_vars = [var for var in dataset.variables]
         lines = []
@@ -166,7 +168,7 @@ class Aggregation:
         lines.append(f'P; time.nrows; {self.nTs}\n')
         lines.append(f'P; time.start; {self.fileRecs[0].start_time_value}\n')
         lines.append(f'P; time.end; {self.fileRecs[-1].end_time_value}\n')
-        lines.append(f'P; time.calendar; {dataset.calendar}\n')
+        lines.append(f'P; time.calendar; {calendar}\n')
         for attr_name in dataset.ncattrs():
             lines.append(f'P; {attr_name}; {dataset.getncattr(attr_name)}\n')
         for vname in nc_vars:
