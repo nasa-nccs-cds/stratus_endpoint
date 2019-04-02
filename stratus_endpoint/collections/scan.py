@@ -15,7 +15,7 @@ class FileRec:
         vars_list = list(dataset.variables.keys())
         vars_list.sort()
         self.varsKey = ",".join(vars_list)
-        time_var = dataset.variables["time"]
+        time_var: Variable = dataset.variables["time"]
         time_data = time_var[:]
         if len(time_data) > 1:
             dt = time_data[1] - time_data[0]
@@ -123,7 +123,7 @@ class Aggregation:
         self.lines = self.process()
 
     def varKey(self):
-        return "--".join(self.vars)
+        return "--".join(self.vars[:4])
 
     def getId(self, collectionId: str ):
         return collectionId + "--" + self.varKey()
