@@ -106,7 +106,8 @@ class  FileScanner:
                 lines.append(f"# dir, {baseDir}\n")
                 lines.append(f"# format, ag1\n")
                 for var in agg.vars:
-                    lines.append( f"{var}, {aggFile}\n")
+                    relPath = os.path.splitext( os.path.relpath(aggFile, baseDir) )[0]
+                    lines.append( f"{var}, {relPath}\n")
             f.writelines(lines)
 
 # From EDAS: writeAggregation
