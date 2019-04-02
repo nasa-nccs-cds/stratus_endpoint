@@ -123,7 +123,7 @@ class Aggregation:
         self.lines = self.process()
 
     def varKey(self):
-        return "--".join(self.vars[:4])
+        return "-".join(list(self.vars)[:4])
 
     def getId(self, collectionId: str ):
         return collectionId + "--" + self.varKey()
