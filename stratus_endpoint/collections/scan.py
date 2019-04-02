@@ -157,12 +157,16 @@ class Aggregation:
         with open( filePath, 'w' ) as f:
             f.writelines( self.lines )
 
+    @staticmethod
+    def attr( ncobj, aname: str, default: str = "" ) -> str:
+        return ncobj.getncattr(aname) if aname in ncobj.ncattrs() else default
+
     def process(self):
-        dataset = Dataset(self.filePath())
-        calendar = dataset.calendar if hasattr(dataset, 'calendar') else "standard"
-        nc_dims = [dim for dim in dataset.dimensions]
-        nc_vars = [var for var in dataset.variables]
-        lines = []
+        dataset: Dataset = Dataset(self.filePath())
+        calendar: str = self.attr( dataset, "calendar", "standard" )
+        nc_dims: List[str] = [dim for dim in dataset.dimensions]
+        nc_vars: List[str] = [var for var in dataset.variables]
+        lines: List[str] = []
         lines.append(f'P; base.path; {self.base}\n')
         lines.append(f'P; num.files; {self.nFiles}\n')
         lines.append(f'P; time.nrows; {self.nTs}\n')
@@ -175,12 +179,16 @@ class Aggregation:
             if vname not in nc_dims:
                 self.vars.add(vname)
                 var: Variable = dataset.variables[vname]
+                long_name = self.attr( var, "long_name", vname )
+                comments = self.attr(var, "comments" )
+                units = self.attr(var, "units")
                 dims = var.dimensions
                 shape = [ str(self.nTs) if dims[iDim] == "time" else str(var.shape[iDim]) for iDim in range(len(dims)) ]
-                lines.append(f'V; {vname}; {var.long_name}; {var.long_name}; {var.comments}; {",".join(shape)}; {1.0}; {" ".join(dims)}; {var.units}\n')
+                lines.append(f'V; {vname}; {long_name}; {long_name}; {comments}; {",".join(shape)}; {1.0}; {" ".join(dims)}; {units}\n')
         for vname in nc_vars:
             if vname in nc_dims:
                 coord: Variable = dataset.variables[vname]
+                units = self.attr(coord, "units")
                 lvname = vname.lower()
                 if lvname == "time":
                     lines.append(f'C; {vname} {self.nTs}\n')
@@ -193,7 +201,7 @@ class Aggregation:
                     if   lvname.startswith("lat"): ctype = "Y"
                     elif lvname.startswith("lon"): ctype = "X"
                     elif lvname.startswith("lev") or lvname.startswith("plev"): ctype = "Z"
-                    lines.append(f'A; {vname}; {vname}; {ctype}; {",".join(shape)}; {coord.units}; {cdata[0]}; {cdata[-1]}\n')
+                    lines.append(f'A; {vname}; {vname}; {ctype}; {",".join(shape)}; {units}; {cdata[0]}; {cdata[-1]}\n')
         for frec in self.fileRecs:
             lines.append(f'F; {frec.start_time_value}; {frec.size}; {frec.relPath}\n')
         return lines
