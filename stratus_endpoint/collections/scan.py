@@ -239,6 +239,7 @@ if __name__ == "__main__":
     parser.add_argument('-ext', help="The file extension for all files in the collection (used only with '-path', default: nc)", default="nc")
     parser.add_argument('-globs', help='A comma-separated list of unix file system globs for selecting files in the collection')
     parser.add_argument('-glob', help='A single unix file system glob for selecting files in the collection')
+    parser.add_argument('-mp', help='Use multiprocessing (true/false)', default="true")
     args = parser.parse_args()
     scanner = FileScanner( args.collectionName, **vars(args) )
     collectionsDir = os.environ.get('HPDA_COLLECTIONS_DIR')
