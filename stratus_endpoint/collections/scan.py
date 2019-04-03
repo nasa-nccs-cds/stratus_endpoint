@@ -1,7 +1,12 @@
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
 from netCDF4 import Dataset, num2date, Variable
 from functools import total_ordering
-import os, glob, yaml, cftime, datetime, argparse
+import os, glob, yaml, cftime, datetime, argparse, math
+import multiprocessing as mp
+from multiprocessing import Pool
+
+def m2s( params: Dict ) -> str:
+    return ",".join( [ f"{key}:{value}" for key,value in params.items() ] )
 
 @total_ordering
 class FileRec:
@@ -65,6 +70,23 @@ class  FileScanner:
         aggs = [ f"---> {varId}:\n{agg}" for varId,agg in self.aggs.items() ]
         return "\n".join( aggs )
 
+    def processPaths(self, paths: List[str] ):
+        nproc = mp.cpu_count() * 2
+        chunksize = math.ceil(len(paths) / nproc)
+        with Pool(processes=nproc) as pool:
+            frecList = pool.map(FileRec, paths, chunksize)
+            for frec in frecList:
+                self.varPaths.setdefault(frec.varsKey, []).append(frec)
+            for varKey, frecList in self.varPaths.items():
+                frecList.sort()
+                base = os.path.commonprefix([os.path.dirname(frec.path) for frec in frecList])
+                size = 0
+                for frec in frecList:
+                    size += frec.size
+                    frec.setBase(base)
+                agg = Aggregation(base, frecList, size)
+                self.aggs[varKey] = agg
+
     def scan( self, **kwargs ):
         glob1 =  kwargs.get( "glob" )
         globsArg =  kwargs.get( "globs" )
@@ -79,28 +101,19 @@ class  FileScanner:
         if len(globs) > 0:
             print( "Scanning globs:" + str(globs) )
             paths = glob.glob( *globs, recursive=True)
-            for path in paths:
-                frec = FileRec( path )
-                self.varPaths.setdefault( frec.varsKey, [] ).append( frec )
-            for varKey, frecList in self.varPaths.items():
-                frecList.sort()
-                base = os.path.commonprefix( [ os.path.dirname(frec.path) for frec in frecList ] )
-                size = 0
-                for frec in frecList:
-                    size += frec.size
-                    frec.setBase(base)
-                agg = Aggregation( base, frecList, size )
-                self.aggs[ varKey ] = agg
+            self.processPaths( paths )
         else: raise Exception( "No files found")
 
     def write( self, collectionsDir: str ):
         baseDir = os.path.expanduser(collectionsDir)
         os.makedirs( baseDir, exist_ok=True )
         collectionsFile = f"{baseDir}/{self.collectionId}.csv"
+        print(" Writing collection file: " + collectionsFile )
         lines = []
         with open( collectionsFile, 'w' ) as f:
             for aggId,agg in self.aggs.items():
                 aggFile = f"{baseDir}/{agg.getId(self.collectionId)}.ag1"
+                print(" Writing agg File: " + aggFile)
                 agg.write( aggFile )
                 lines.append(f"# title, {self.collectionId}\n")
                 lines.append(f"# dir, {baseDir}\n")
@@ -168,7 +181,7 @@ class Aggregation:
         nc_dims: List[str] = [dim for dim in dataset.dimensions]
         nc_vars: List[str] = [var for var in dataset.variables]
         lines: List[str] = []
-        resolution = {}
+        resolution = dict()
         lines.append(f'P; base.path; {self.base}\n')
         lines.append(f'P; num.files; {self.nFiles}\n')
         lines.append(f'P; time.nrows; {self.nTs}\n')
@@ -198,7 +211,6 @@ class Aggregation:
                     elif lvname.startswith("lon"): ctype = "X"
                     elif lvname.startswith("lev") or lvname.startswith("plev"): ctype = "Z"
                     lines.append(f'A; {vname}; {vname}; {ctype}; {",".join(shape)}; {units}; {cdata[0]}; {cdata[-1]}\n')
-        resolutionStr = str(resolution).strip("{}")
         for vname in nc_vars:
             if vname not in nc_dims:
                 self.vars.add(vname)
@@ -208,7 +220,7 @@ class Aggregation:
                 units = self.attr(var, "units")
                 dims = var.dimensions
                 shape = [ str(self.nTs) if dims[iDim] == "time" else str(var.shape[iDim]) for iDim in range(len(dims)) ]
-                lines.append(f'V; {vname}; {long_name}; {long_name}; {comments}; {",".join(shape)}; {resolutionStr}; {" ".join(dims)}; {units}\n')
+                lines.append(f'V; {vname}; {long_name}; {long_name}; {comments}; {",".join(shape)}; {m2s(resolution)}; {" ".join(dims)}; {units}\n')
         for frec in self.fileRecs:
             lines.append(f'F; {frec.start_time_value}; {frec.size}; {frec.relPath}\n')
         return lines
@@ -227,5 +239,5 @@ if __name__ == "__main__":
     assert collectionsDir is not None, "Must set the HPDA_COLLECTIONS_DIR environment variable"
     scanner.write( collectionsDir )
 
-#    scanner2 = FileScanner( path="/Users/tpmaxwel/Dropbox/Tom/Data/MERRA/DAILY", ext="nc" )
+
 
