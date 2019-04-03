@@ -168,6 +168,7 @@ class Aggregation:
         nc_dims: List[str] = [dim for dim in dataset.dimensions]
         nc_vars: List[str] = [var for var in dataset.variables]
         lines: List[str] = []
+        resolution = {}
         lines.append(f'P; base.path; {self.base}\n')
         lines.append(f'P; num.files; {self.nFiles}\n')
         lines.append(f'P; time.nrows; {self.nTs}\n')
@@ -177,6 +178,28 @@ class Aggregation:
         for attr_name in dataset.ncattrs():
             lines.append(f'P; {attr_name}; {dataset.getncattr(attr_name)}\n')
         for vname in nc_vars:
+            if vname in nc_dims:
+                coord: Variable = dataset.variables[vname]
+                units = self.attr(coord, "units")
+                lvname = vname.lower()
+                if lvname == "time":
+                    start_value = self.fileRecs[0].start_time_value
+                    end_value = self.fileRecs[-1].end_time_value
+                    lines.append(f'C; {vname} {self.nTs}\n')
+                    lines.append(f'A; {vname}; {vname}; T; {str(self.nTs)}; minutes since 1970-01-01T00:00:00Z; {start_value}; {end_value}\n')
+                    resolution[lvname] = 1.0 if coord.shape[0] < 2 else abs((end_value - start_value)/(self.nTs-1))
+                else:
+                    lines.append(f'C; {vname} {coord.shape[0]}\n')
+                    cdata = coord[:]
+                    ctype = "?"
+                    shape = [ str(s) for s in coord.shape ]
+                    resolution[lvname] = 1.0 if coord.shape[0] < 2 else abs( (cdata[-1]-cdata[0])/(coord.shape[0]-1) )
+                    if   lvname.startswith("lat"): ctype = "Y"
+                    elif lvname.startswith("lon"): ctype = "X"
+                    elif lvname.startswith("lev") or lvname.startswith("plev"): ctype = "Z"
+                    lines.append(f'A; {vname}; {vname}; {ctype}; {",".join(shape)}; {units}; {cdata[0]}; {cdata[-1]}\n')
+        resolutionStr = str(resolution).strip("{}")
+        for vname in nc_vars:
             if vname not in nc_dims:
                 self.vars.add(vname)
                 var: Variable = dataset.variables[vname]
@@ -185,24 +208,7 @@ class Aggregation:
                 units = self.attr(var, "units")
                 dims = var.dimensions
                 shape = [ str(self.nTs) if dims[iDim] == "time" else str(var.shape[iDim]) for iDim in range(len(dims)) ]
-                lines.append(f'V; {vname}; {long_name}; {long_name}; {comments}; {",".join(shape)}; {1.0}; {" ".join(dims)}; {units}\n')
-        for vname in nc_vars:
-            if vname in nc_dims:
-                coord: Variable = dataset.variables[vname]
-                units = self.attr(coord, "units")
-                lvname = vname.lower()
-                if lvname == "time":
-                    lines.append(f'C; {vname} {self.nTs}\n')
-                    lines.append(f'A; {vname}; {vname}; T; {str(self.nTs)}; minutes since 1970-01-01T00:00:00Z; {self.fileRecs[0].start_time_value}; {self.fileRecs[-1].end_time_value}\n')
-                else:
-                    lines.append(f'C; {vname} {coord.shape[0]}\n')
-                    cdata = coord[:]
-                    ctype = "?"
-                    shape = [ str(s) for s in coord.shape ]
-                    if   lvname.startswith("lat"): ctype = "Y"
-                    elif lvname.startswith("lon"): ctype = "X"
-                    elif lvname.startswith("lev") or lvname.startswith("plev"): ctype = "Z"
-                    lines.append(f'A; {vname}; {vname}; {ctype}; {",".join(shape)}; {units}; {cdata[0]}; {cdata[-1]}\n')
+                lines.append(f'V; {vname}; {long_name}; {long_name}; {comments}; {",".join(shape)}; {resolutionStr}; {" ".join(dims)}; {units}\n')
         for frec in self.fileRecs:
             lines.append(f'F; {frec.start_time_value}; {frec.size}; {frec.relPath}\n')
         return lines
