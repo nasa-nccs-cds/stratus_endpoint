@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
 from netCDF4 import Dataset, num2date, Variable
 from functools import total_ordering
-import os, glob, yaml, cftime, datetime, argparse, math
+import os, glob, yaml, cftime, datetime, argparse, math, time
 import multiprocessing as mp
 from multiprocessing import Pool
 
@@ -70,22 +70,28 @@ class  FileScanner:
         aggs = [ f"---> {varId}:\n{agg}" for varId,agg in self.aggs.items() ]
         return "\n".join( aggs )
 
-    def processPaths(self, paths: List[str] ):
+    def processPaths(self, paths: List[str], **kwargs ):
         nproc = mp.cpu_count() * 2
+        par = kwargs.get("mp","t").lower().startswith("t")
+        t0 = time.time()
         chunksize = math.ceil(len(paths) / nproc)
-        with Pool(processes=nproc) as pool:
-            frecList = pool.map(FileRec, paths, chunksize)
+        if par:
+            with Pool(processes=nproc) as pool:
+                frecList = pool.map(FileRec, paths, chunksize)
+        else:
+            frecList = [ FileRec(path) for path in paths ]
+        for frec in frecList:
+            self.varPaths.setdefault(frec.varsKey, []).append(frec)
+        for varKey, frecList in self.varPaths.items():
+            frecList.sort()
+            base = os.path.commonprefix([os.path.dirname(frec.path) for frec in frecList])
+            size = 0
             for frec in frecList:
-                self.varPaths.setdefault(frec.varsKey, []).append(frec)
-            for varKey, frecList in self.varPaths.items():
-                frecList.sort()
-                base = os.path.commonprefix([os.path.dirname(frec.path) for frec in frecList])
-                size = 0
-                for frec in frecList:
-                    size += frec.size
-                    frec.setBase(base)
-                agg = Aggregation(base, frecList, size)
-                self.aggs[varKey] = agg
+                size += frec.size
+                frec.setBase(base)
+            agg = Aggregation(base, frecList, size)
+            self.aggs[varKey] = agg
+        print(" Completed file scan in " + str(time.time() - t0) + " seconds")
 
     def scan( self, **kwargs ):
         glob1 =  kwargs.get( "glob" )
@@ -101,7 +107,7 @@ class  FileScanner:
         if len(globs) > 0:
             print( "Scanning globs:" + str(globs) )
             paths = glob.glob( *globs, recursive=True)
-            self.processPaths( paths )
+            self.processPaths( paths, **kwargs )
         else: raise Exception( "No files found")
 
     def write( self, collectionsDir: str ):
