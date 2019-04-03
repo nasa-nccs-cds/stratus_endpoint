@@ -204,11 +204,11 @@ class Aggregation:
                 if lvname == "time":
                     start_value = self.fileRecs[0].start_time_value
                     end_value = self.fileRecs[-1].end_time_value
-                    lines.append(f'C; {vname} {self.nTs}\n')
+                    lines.append(f'C; {vname}; {self.nTs}\n')
                     lines.append(f'A; {vname}; {vname}; T; {str(self.nTs)}; minutes since 1970-01-01T00:00:00Z; {start_value}; {end_value}\n')
                     resolution[lvname] = 1.0 if coord.shape[0] < 2 else abs((end_value - start_value)/(self.nTs-1))
                 else:
-                    lines.append(f'C; {vname} {coord.shape[0]}\n')
+                    lines.append(f'C; {vname}; {coord.shape[0]}\n')
                     cdata = coord[:]
                     ctype = "?"
                     shape = [ str(s) for s in coord.shape ]
