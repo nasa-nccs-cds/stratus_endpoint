@@ -71,10 +71,10 @@ class  FileScanner:
         return "\n".join( aggs )
 
     def processPaths(self, paths: List[str], **kwargs ):
-        nproc = mp.cpu_count() * 2
+        nproc = mp.cpu_count()
         par = kwargs.get("mp","t").lower().startswith("t")
         t0 = time.time()
-        chunksize = math.ceil(len(paths) / nproc)
+        chunksize = math.ceil( len(paths) / nproc )
         if par:
             with Pool(processes=nproc) as pool:
                 frecList = pool.map(FileRec, paths, chunksize)
