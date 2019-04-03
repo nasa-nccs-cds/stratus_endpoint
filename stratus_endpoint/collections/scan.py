@@ -71,7 +71,7 @@ class  FileScanner:
         return "\n".join( aggs )
 
     def processPaths(self, paths: List[str], **kwargs ):
-        nproc = mp.cpu_count()
+        nproc = 2*mp.cpu_count()
         par = kwargs.get("mp","t").lower().startswith("t")
         t0 = time.time()
         chunksize = math.ceil( len(paths) / nproc )
