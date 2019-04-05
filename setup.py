@@ -10,13 +10,13 @@ with open( "requirements/stratus.txt" ) as f:
       if dep.strip() != '' and not dep.startswith('-e'):
           install_requires.add( dep )
 
-setup(name='stratus-endpoint',
+setup(name='stratus_endpoint',
       version='0.0.3',
       description='Base classes for creating service endpoints for the Stratus Framework',
       author='Thomas Maxwell',
       zip_safe=False,
       author_email='thomas.maxwell@nasa.gov',
-      url='https://github.com/nasa-nccs-cds/edask.git',
+      url='https://github.com/nasa-nccs-cds/stratus_endpoint.git',
       long_description=long_description,
       long_description_content_type="text/markdown",
       packages=find_packages(),

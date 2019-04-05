@@ -6,7 +6,7 @@ These classes wrap python services for integration with other services using Str
 ### Conda environment setup
 
 ```
- >> conda create -n stratus -c conda-forge python=3.6 libnetcdf netCDF4 yaml
+ >> conda create -n stratus -c conda-forge python=3.6 libnetcdf netCDF4 pyyaml
  ```
 
 ### Installation
