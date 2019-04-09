@@ -1,4 +1,4 @@
-import json, string, random, abc, os
+import json, string, random, abc, time
 from enum import Enum, auto
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
 import xarray as xa
@@ -29,28 +29,6 @@ class Status(Enum):
     def str( cls, _stat: "Status" ) -> str:
         return str(_stat).lower().split(".")[1]
 
-class Endpoint:
-    __metaclass__ = abc.ABCMeta
-
-    def __init__( self, **kwargs ):
-        pass
-
-    @classmethod
-    def randomStr(cls, length) -> str:
-        tokens = string.ascii_uppercase + string.ascii_lowercase + string.digits
-        return ''.join(random.SystemRandom().choice(tokens) for _ in range(length))
-
-    @abc.abstractmethod
-    def request(self, requestSpec: Dict, **kwargs ) -> "Task": pass
-
-    @abc.abstractmethod
-    def shutdown(self, **kwargs ): pass
-
-    @abc.abstractmethod
-    def capabilities(self, type: str, **kwargs ) -> Dict: pass
-
-    @abc.abstractmethod
-    def init( self ): pass
 
 class TaskResult:
     def __init__(self, header: Dict, data: List[xa.Dataset] = None ):
@@ -77,7 +55,7 @@ class TaskResult:
     def type(self) -> str:
         return self.header.get( "type", "")
 
-class Task:
+class TaskFuture:
     __metaclass__ = abc.ABCMeta
 
     def __init__( self, rid: str, cid: str, **kwargs ):
@@ -100,6 +78,12 @@ class Task:
     @abc.abstractmethod
     def getResult( self, **kwargs ) ->  Optional[TaskResult]: pass
 
+    def blockForResult( self, **kwargs ) ->  TaskResult:
+        while True:
+            result = self.getResult( **kwargs )
+            if result is not None: return result
+            time.sleep( 0.2 )
+
     @abc.abstractmethod
     def status(self) ->  Status: pass
 
@@ -108,6 +92,29 @@ class Task:
     def __str__(self) -> str:
         items = dict( rid=self._rid, cid=self._cid, status=self.status())
         return f"{self.__class__.__name__}{str(items)}"
+
+class Endpoint:
+    __metaclass__ = abc.ABCMeta
+
+    def __init__( self, **kwargs ):
+        pass
+
+    @classmethod
+    def randomStr(cls, length) -> str:
+        tokens = string.ascii_uppercase + string.ascii_lowercase + string.digits
+        return ''.join(random.SystemRandom().choice(tokens) for _ in range(length))
+
+    @abc.abstractmethod
+    def request(self, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ) -> "TaskFuture": pass
+
+    @abc.abstractmethod
+    def shutdown(self, **kwargs ): pass
+
+    @abc.abstractmethod
+    def capabilities(self, type: str, **kwargs ) -> Dict: pass
+
+    @abc.abstractmethod
+    def init( self ): pass
 
 
 

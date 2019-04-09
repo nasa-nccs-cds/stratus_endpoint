@@ -1,4 +1,4 @@
-from .base import Endpoint, Task, TaskResult, Status
+from .base import Endpoint, TaskFuture, TaskResult, Status
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
 import time
 
@@ -8,7 +8,7 @@ class TestEndpoint(Endpoint):
     def __init__( self, **kwargs ):
         Endpoint.__init__( self, **kwargs )
 
-    def request(self, requestSpec: Dict, **kwargs ) -> "Task":
+    def request(self, requestSpec: Dict, **kwargs ) -> "TaskFuture":
         workTime = float( requestSpec.get( "workTime", 0.0 ) )
         return TestTask( workTime )
 
@@ -19,10 +19,10 @@ class TestEndpoint(Endpoint):
     def init( self ): pass
 
 
-class TestTask(Task):
+class TestTask(TaskFuture):
 
     def __init__( self, workTime: float, **kwargs ):
-        Task.__init__( self, Endpoint.randomStr(6), Endpoint.randomStr(6) )
+        TaskFuture.__init__(self, Endpoint.randomStr(6), Endpoint.randomStr(6))
         self._workTime = workTime
         self._startTime = time.time()
         self._parms = kwargs
