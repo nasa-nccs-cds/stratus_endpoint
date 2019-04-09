@@ -103,6 +103,9 @@ class TaskFuture(TaskHandle):
     def getResult( self, **kwargs ) ->  Optional[TaskResult]:
         return self._future.result() if self._future.done() else None
 
+    def cancel(self):
+        self._future.cancel()
+
     def status(self) ->  Status:
         if self._future.done():
             if self._future.exception() is not None:  return Status.ERROR
