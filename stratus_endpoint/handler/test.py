@@ -11,6 +11,7 @@ class TestEndpoint(Endpoint):
 
     def request(self, requestSpec: Dict, **kwargs ) -> "TaskHandle":
         workTime = float( requestSpec.get( "workTime", 0.0 ) )
+        print( f"exec TestEndpoint, request = {requestSpec}")
         return TestTask( workTime )
 
     def shutdown(self, **kwargs ): pass
