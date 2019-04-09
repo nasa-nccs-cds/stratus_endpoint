@@ -122,6 +122,9 @@ class TaskFuture(TaskHandle):
     def cancel(self):
         self._future.cancel()
 
+    def exception(self) -> Exception:
+        return self._future.exception()
+
     def status(self) ->  Status:
         if self._future.done():
             if self._future.exception() is not None:  return Status.ERROR
