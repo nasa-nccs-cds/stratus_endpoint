@@ -2,6 +2,7 @@ import json, string, random, abc, time
 from enum import Enum, auto
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
 import xarray as xa
+from concurrent.futures import Future
 
 class Status(Enum):
     IDLE = auto()
@@ -55,7 +56,7 @@ class TaskResult:
     def type(self) -> str:
         return self.header.get( "type", "")
 
-class TaskFuture:
+class TaskHandle:
     __metaclass__ = abc.ABCMeta
 
     def __init__( self, rid: str, cid: str, **kwargs ):
@@ -93,6 +94,22 @@ class TaskFuture:
         items = dict( rid=self._rid, cid=self._cid, status=self.status())
         return f"{self.__class__.__name__}{str(items)}"
 
+class TaskFuture(TaskHandle):
+
+    def __init__( self, rid: str, cid: str, future: Future, **kwargs ):
+        TaskHandle.__init__(self, rid, cid, **kwargs)
+        self._future = future
+
+    def getResult( self, **kwargs ) ->  Optional[TaskResult]:
+        return self._future.result() if self._future.done() else None
+
+    def status(self) ->  Status:
+        if self._future.done():
+            if self._future.exception() is not None:  return Status.ERROR
+            elif self._future.cancelled():            return Status.CANCELED
+            else:                                     return Status.COMPLETED
+        else: return Status.EXECUTING
+
 class Endpoint:
     __metaclass__ = abc.ABCMeta
 
@@ -105,7 +122,7 @@ class Endpoint:
         return ''.join(random.SystemRandom().choice(tokens) for _ in range(length))
 
     @abc.abstractmethod
-    def request(self, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ) -> "TaskFuture": pass
+    def request(self, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ) -> "TaskHandle": pass
 
     @abc.abstractmethod
     def shutdown(self, **kwargs ): pass
