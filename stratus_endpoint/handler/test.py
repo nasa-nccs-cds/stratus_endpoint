@@ -23,6 +23,7 @@ class TestEndpoint(Endpoint):
 
 
 class TestTask(TaskHandle):
+    BaseTime = None
 
     def __init__( self, workTime: float, **kwargs ):
         TaskHandle.__init__(self, Endpoint.randomStr(6), Endpoint.randomStr(6))
@@ -30,6 +31,11 @@ class TestTask(TaskHandle):
         self._startTime = time.time()
         self._parms = kwargs
         self._clients = kwargs.get("clients","").split(",")
+        print( f"Starting TestTask at time {self.elapsed()}, parms = {kwargs}")
+
+    def elapsed(self):
+        if TestTask.BaseTime is None: TestTask.BaseTime = time.time()
+        return time.time() - TestTask.BaseTime
 
     @property
     def rid(self):
@@ -47,6 +53,7 @@ class TestTask(TaskHandle):
 
     def status(self) ->  Status:
         completed = ( time.time() - self._startTime ) > self._workTime
+        if completed: print( f"Completed TestTask at time {self.elapsed()}")
         return Status.COMPLETED if completed else Status.EXECUTING
 
 
