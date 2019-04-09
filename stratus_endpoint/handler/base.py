@@ -1,6 +1,6 @@
 import json, string, random, abc, time
 from enum import Enum, auto
-from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
+from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional, Iterable
 import xarray as xa
 from concurrent.futures import Future
 
@@ -57,6 +57,20 @@ class TaskResult:
     @property
     def type(self) -> str:
         return self.header.get( "type", "")
+
+    @staticmethod
+    def merge( results: List["TaskResult"] ) -> Optional["TaskResult"]:
+        if len(results) == 0:      return None
+        elif len( results ) == 1:  return results[0]
+        else:
+            header = {}
+            data: List[xa.Dataset] = []
+            for index, result in enumerate(results):
+                for key, value in result.header.items():
+                    header[f"{key}~{index}"] = value
+                data.extend( result.data )
+        return TaskResult( header, data )
+
 
 class TaskHandle:
     __metaclass__ = abc.ABCMeta
