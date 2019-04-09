@@ -8,6 +8,7 @@ class Status(Enum):
     IDLE = auto()
     EXECUTING = auto()
     COMPLETED = auto()
+    CANCELED = auto()
     ERROR = auto()
     UNKNOWN = auto()
 
@@ -22,6 +23,7 @@ class Status(Enum):
         if stat == "IDLE":          return cls.IDLE
         elif stat == "EXECUTING":   return cls.EXECUTING
         elif stat == "COMPLETED":   return cls.COMPLETED
+        elif stat == "CANCELED":    return cls.CANCELED
         elif stat == "ERROR":       return cls.ERROR
         elif stat == "UNKNOWN":     return cls.UNKNOWN
         raise Exception( "Unrecognized status: " + stat )
