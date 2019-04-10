@@ -1,6 +1,7 @@
 import json, string, random, abc, time
 from enum import Enum, auto
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional, Iterable
+from stratus_endpoint.util.config import StratusLogger
 import xarray as xa
 from concurrent.futures import Future
 
@@ -76,6 +77,7 @@ class TaskHandle:
     __metaclass__ = abc.ABCMeta
 
     def __init__( self, **kwargs ):
+        self.logger = StratusLogger.getLogger()
         self._parms = kwargs
         self._rid = self.getAssignParm("rid")
         self._cid = self.getAssignParm("cid")
@@ -140,6 +142,7 @@ class Endpoint:
 
     def __init__( self, **kwargs ):
         self.parms = kwargs
+        self.logger = StratusLogger.getLogger()
 
     @classmethod
     def randomStr(cls, length) -> str:

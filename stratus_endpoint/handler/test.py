@@ -10,7 +10,7 @@ class TestEndpoint(Endpoint):
 
     def request(self, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ) -> "TaskHandle":
         workTime = float( requestSpec.get( "workTime", 0.0 ) )
-        print( f"exec TestEndpoint, request = {requestSpec}")
+        self.logger.info( f"exec TestEndpoint, request = {requestSpec}")
         return TestTask( workTime )
 
     def shutdown(self, **kwargs ): pass
@@ -31,7 +31,7 @@ class TestTask(TaskHandle):
         self._workTime = workTime
         self._startTime = time.time()
         self._clients = kwargs.get("clients","").split(",")
-        print( "Starting TestTask[{}:{}] at time {:8.3f}, worktime={:8.2f}, parms = {}, t={:12.3f}".format( self.cid, self.rid, self.elapsed(),workTime,str(kwargs),time.time()))
+        self.logger.info( "Starting TestTask[{}:{}] at time {:8.3f}, worktime={:8.2f}, parms = {}, t={:12.3f}".format( self.cid, self.rid, self.elapsed(),workTime,str(kwargs),time.time()))
 
     def elapsed(self):
         if TestTask.BaseTime is None: TestTask.BaseTime = time.time()
@@ -53,7 +53,7 @@ class TestTask(TaskHandle):
 
     def status(self) ->  Status:
         completed = ( time.time() - self._startTime ) > self._workTime
-        if completed: print( f"Completed TestTask at time {self.elapsed()}")
+        if completed: self.logger.info( f"Completed TestTask at time {self.elapsed()}")
         return Status.COMPLETED if completed else Status.EXECUTING
 
 
