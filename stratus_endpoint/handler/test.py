@@ -2,7 +2,6 @@ from .base import Endpoint, TaskHandle, TaskResult, Status
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
 import time
 
-
 class TestEndpoint(Endpoint):
 
     def __init__( self, **kwargs ):
