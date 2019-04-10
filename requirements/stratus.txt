@@ -1,4 +1,2 @@
-libnetcdf
-netCDF4
 pyyaml
 decorator
