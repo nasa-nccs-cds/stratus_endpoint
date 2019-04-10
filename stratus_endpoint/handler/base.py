@@ -136,7 +136,7 @@ class Endpoint:
     __metaclass__ = abc.ABCMeta
 
     def __init__( self, **kwargs ):
-        pass
+        self.parms = kwargs
 
     @classmethod
     def randomStr(cls, length) -> str:

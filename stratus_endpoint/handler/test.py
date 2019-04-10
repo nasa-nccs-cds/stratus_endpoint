@@ -31,7 +31,7 @@ class TestTask(TaskHandle):
         self._startTime = time.time()
         self._parms = kwargs
         self._clients = kwargs.get("clients","").split(",")
-        print( f"Starting TestTask at time {self.elapsed()}, parms = {kwargs}")
+        print( "Starting TestTask at time {:8.3f}, parms = {}".format(self.elapsed(),str(kwargs)))
 
     def elapsed(self):
         if TestTask.BaseTime is None: TestTask.BaseTime = time.time()
