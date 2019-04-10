@@ -26,12 +26,12 @@ class TestTask(TaskHandle):
     BaseTime = None
 
     def __init__( self, workTime: float, **kwargs ):
-        TaskHandle.__init__(self, Endpoint.randomStr(6), Endpoint.randomStr(6))
+        self._parms = kwargs
+        TaskHandle.__init__(self, **kwargs )
         self._workTime = workTime
         self._startTime = time.time()
-        self._parms = kwargs
         self._clients = kwargs.get("clients","").split(",")
-        print( "Starting TestTask at time {:8.3f}, worktime={:8.2f}, parms = {}, t={:12.3f}".format(self.elapsed(),workTime,str(kwargs),time.time()))
+        print( "Starting TestTask[{}:{}] at time {:8.3f}, worktime={:8.2f}, parms = {}, t={:12.3f}".format( self.cid, self.rid, self.elapsed(),workTime,str(kwargs),time.time()))
 
     def elapsed(self):
         if TestTask.BaseTime is None: TestTask.BaseTime = time.time()

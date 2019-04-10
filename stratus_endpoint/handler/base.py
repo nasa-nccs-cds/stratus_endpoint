@@ -75,10 +75,10 @@ class TaskResult:
 class TaskHandle:
     __metaclass__ = abc.ABCMeta
 
-    def __init__( self, rid: str, cid: str, **kwargs ):
-        self._rid = rid
-        self._cid = cid
+    def __init__( self, **kwargs ):
         self._parms = kwargs
+        self._rid = self.getAssignParm("rid")
+        self._cid = self.getAssignParm("cid")
         self._clients = kwargs.get("clients","").split(",")
 
     @property
@@ -88,6 +88,9 @@ class TaskHandle:
     @property
     def cid(self):                        # request ID
         return self._cid
+
+    def getAssignParm(self, key: str, plen = 6 ) -> str :
+        return self._parms.get( key, Endpoint.randomStr(6) )
 
     def hasClient(self, cid: str ) -> bool:
         return cid in self._clients
@@ -112,8 +115,8 @@ class TaskHandle:
 
 class TaskFuture(TaskHandle):
 
-    def __init__( self, rid: str, cid: str, future: Future, **kwargs ):
-        TaskHandle.__init__(self, rid, cid, **kwargs)
+    def __init__( self, future: Future, **kwargs ):
+        TaskHandle.__init__(self, **kwargs)
         self._future = future
 
     def getResult( self, **kwargs ) ->  Optional[TaskResult]:
