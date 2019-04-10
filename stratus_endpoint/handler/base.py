@@ -43,13 +43,13 @@ class TaskResult:
         return self.data.pop(0)
 
     def empty(self) -> bool:
-        return len(self.data) == 0
+        return self.data is None or len(self.data) == 0
 
     def size(self) -> int:
-        return len(self.data)
+        return 0 if self.data is None else len(self.data)
 
     def __len__(self):
-        return len(self.data)
+        return 0 if self.data is None else len(self.data)
 
     def __str__(self):
         return f"TR{str({**self.header,'size':self.size()})}"
