@@ -34,6 +34,7 @@ class TestTask(TaskHandle):
         TaskHandle.__init__(self, **kwargs )
         self._workTime = workTime
         self._startTime = time.time()
+        self._status = Status.EXECUTING
         self._clients = kwargs.get("clients","").split(",")
         self.logger.info( "Starting TestTask[{}:{}] at time {:8.3f}, worktime={:8.2f}, parms = {}, t={:12.3f}".format( self.cid, self.rid, self.elapsed(),workTime,str(kwargs),time.time()))
 
@@ -56,8 +57,11 @@ class TestTask(TaskHandle):
         return TaskResult( dict( type="test" ) ) if self.status() == Status.COMPLETED else None
 
     def status(self) ->  Status:
-        completed = ( time.time() - self._startTime ) > self._workTime
-        if completed: self.logger.info( f"Completed TestTask at time {self.elapsed()}")
-        return Status.COMPLETED if completed else Status.EXECUTING
+        if self._status == Status.EXECUTING:
+            completed = ( time.time() - self._startTime ) > self._workTime
+            if completed:
+                self.logger.info( f"Completed TestTask at time {self.elapsed()}")
+                self._status = Status.COMPLETED
+        return self._status
 
 
