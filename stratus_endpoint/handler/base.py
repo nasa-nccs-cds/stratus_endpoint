@@ -82,6 +82,7 @@ class TaskHandle:
         self._rid = self.getAssignParm("rid")
         self._cid = self.getAssignParm("cid")
         self._clients = kwargs.get("clients","").split(",")
+        self._pollPeriod = float( kwargs.get("pollPeriod", 1.0) )
 
     @property
     def rid(self):                        # request ID
@@ -99,6 +100,12 @@ class TaskHandle:
 
     @abc.abstractmethod
     def getResult( self, **kwargs ) ->  Optional[TaskResult]: pass
+
+    def waitUntilReady( self ):
+        status = Status.IDLE
+        while status == Status.IDLE or status == Status.EXECUTING:
+            time.sleep( self._pollPeriod )
+            status = self.status()
 
     def blockForResult( self, **kwargs ) ->  TaskResult:
         while True:
