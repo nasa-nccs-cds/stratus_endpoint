@@ -122,8 +122,8 @@ class TaskHandle:
     @abc.abstractmethod
     def status(self) ->  Status: pass
 
-    @abc.abstractmethod
-    def exception(self) -> Exception: pass
+    def exception(self) -> Exception:
+        raise Exception( "method exception() not implemented in class " + self.__class__.__name__ )
 
     def __getitem__( self, key: str ) -> str: return self._parms.get( key, None )
 
