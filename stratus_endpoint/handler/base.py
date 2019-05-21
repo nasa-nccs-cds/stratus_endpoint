@@ -122,6 +122,9 @@ class TaskHandle:
     @abc.abstractmethod
     def status(self) ->  Status: pass
 
+    @abc.abstractmethod
+    def exception(self) -> Exception: pass
+
     def __getitem__( self, key: str ) -> str: return self._parms.get( key, None )
 
     def __str__(self) -> str:
