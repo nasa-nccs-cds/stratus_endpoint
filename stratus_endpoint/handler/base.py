@@ -158,6 +158,7 @@ class FailedTask(TaskHandle):
 
     def __init__( self, exception: Exception, **kwargs ):
         TaskHandle.__init__(self, **kwargs)
+        self.logger.info( f"FailedTask: exception = {exception}")
         self._exception = exception
 
     def getResult( self, **kwargs ) ->  Optional[TaskResult]:
