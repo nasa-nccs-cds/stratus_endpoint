@@ -113,8 +113,9 @@ class TaskHandle:
             time.sleep( self._pollPeriod )
             status = self.status()
 
-    def blockForResult( self, **kwargs ) ->  TaskResult:
+    def blockForResult( self, **kwargs ) ->  Optional[TaskResult]:
         while True:
+            if self.status() == Status.ERROR: return None
             result = self.getResult( **kwargs )
             if result is not None: return result
             time.sleep( 0.2 )
@@ -152,6 +153,24 @@ class TaskFuture(TaskHandle):
             elif self._future.cancelled():            return Status.CANCELED
             else:                                     return Status.COMPLETED
         else: return Status.EXECUTING
+
+class FailedTask(TaskHandle):
+
+    def __init__( self, exception: Exception, **kwargs ):
+        TaskHandle.__init__(self, **kwargs)
+        self._exception = exception
+
+    def getResult( self, **kwargs ) ->  Optional[TaskResult]:
+        return  None
+
+    def cancel(self):
+        pass
+
+    def exception(self) -> Exception:
+        return self._exception
+
+    def status(self) ->  Status:
+        return Status.ERROR
 
 class Endpoint:
     __metaclass__ = abc.ABCMeta
