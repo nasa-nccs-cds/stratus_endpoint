@@ -39,6 +39,9 @@ class TaskResult:
         self.header = header
         self.data: List[xa.Dataset] = [] if data is None else data
 
+    def getDataset(self) -> xa.Dataset:
+        return xa.merge( self.data )
+
     def getResultClass(self):
         return self.header.get( "@ResultClass", "DATA" )
 
