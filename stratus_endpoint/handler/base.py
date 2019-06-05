@@ -126,8 +126,8 @@ class TaskHandle:
     @abc.abstractmethod
     def status(self) ->  Status: pass
 
-    def exception(self) -> Exception:
-        raise Exception( "method exception() not implemented in class " + self.__class__.__name__ )
+    @abc.abstractmethod
+    def exception(self) -> Optional[Exception]: pass
 
     def __getitem__( self, key: str ) -> str: return self._parms.get( key, None )
 
@@ -147,7 +147,7 @@ class TaskFuture(TaskHandle):
     def cancel(self):
         self._future.cancel()
 
-    def exception(self) -> Exception:
+    def exception(self) -> Optional[Exception]:
         return self._future.exception()
 
     def status(self) ->  Status:
@@ -170,7 +170,7 @@ class FailedTask(TaskHandle):
     def cancel(self):
         pass
 
-    def exception(self) -> Exception:
+    def exception(self) -> Optional[Exception]:
         return self._exception
 
     def status(self) ->  Status:
