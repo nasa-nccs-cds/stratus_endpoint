@@ -1,6 +1,34 @@
-from stratus_endpoint.handler.base import Status
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Optional
 import traceback
+from enum import Enum, auto
+
+class Status(Enum):
+    IDLE = auto()
+    EXECUTING = auto()
+    COMPLETED = auto()
+    CANCELED = auto()
+    ERROR = auto()
+    UNKNOWN = auto()
+
+    @classmethod
+    def decode( cls, _stat: str ) -> "Status":
+        toks = _stat.split(".")
+        if len( toks ) > 1:
+            assert toks[0].upper() == "STATUS", "Status: attempt to decode a str that is not a status: " + _stat
+            stat = toks[1].upper()
+        else:
+            stat = toks[0].upper()
+        if stat == "IDLE":          return cls.IDLE
+        elif stat == "EXECUTING":   return cls.EXECUTING
+        elif stat == "COMPLETED":   return cls.COMPLETED
+        elif stat == "CANCELED":    return cls.CANCELED
+        elif stat == "ERROR":       return cls.ERROR
+        elif stat == "UNKNOWN":     return cls.UNKNOWN
+        raise Exception( "Unrecognized status: " + stat )
+
+    @classmethod
+    def str( cls, _stat: "Status" ) -> str:
+        return str(_stat).lower().split(".")[1]
 
 class ErrorRecord:
 
