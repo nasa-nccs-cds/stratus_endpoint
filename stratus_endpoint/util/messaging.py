@@ -8,7 +8,11 @@ class ErrorRecord:
         self.message = message
         self.traceback = traceback
 
-    def
+    def str(self):
+        return f"Execption[ {self.message} ]:\n" + "\n".join( self.traceback )
+
+    def repr(self):
+        return f"EX:{self.message}$" + "$".join(self.traceback)
 
 class RequestMetadata:
 
