@@ -128,11 +128,9 @@ class TaskHandle:
             if result is not None: return result
             time.sleep( 0.2 )
 
-    @abc.abstractmethod
     def status(self) ->  Status:
         return self.messages.status
 
-    @abc.abstractmethod
     def exception(self) -> Optional[ErrorRecord]:
         return self.messages.error
 
