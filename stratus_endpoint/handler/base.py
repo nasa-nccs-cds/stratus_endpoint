@@ -147,7 +147,7 @@ class Endpoint:
         return ''.join(random.SystemRandom().choice(tokens) for _ in range(length))
 
     @abc.abstractmethod
-    def request(self, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ) -> "TaskHandle": pass
+    def request(self, tid: str, rid: str, cid: str, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ) -> "TaskHandle": pass
 
     @abc.abstractmethod
     def shutdown(self, **kwargs ): pass
