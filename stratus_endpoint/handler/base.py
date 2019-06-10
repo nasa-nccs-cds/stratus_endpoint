@@ -74,7 +74,7 @@ class TaskHandle:
 
     @property
     def messages(self) -> RequestMetadata:
-        return messageCemter.request( self._rid )
+        return messageCenter.request( self._rid )
 
     def getAssignParm(self, key: str, plen = 6 ) -> str :
         return self._parms.get( key, Endpoint.randomStr(6) )

@@ -90,4 +90,4 @@ class MessageCenter:
         except: pass
 
 
-messageCemter = MessageCenter()
+messageCenter = MessageCenter()
