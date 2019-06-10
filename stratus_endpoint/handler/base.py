@@ -59,8 +59,9 @@ class TaskHandle:
     def __init__( self, **kwargs ):
         self.logger = StratusLogger.getLogger()
         self._parms = kwargs
-        self._rid = self.getAssignParm("rid")
-        self._cid = self.getAssignParm("cid")
+        self._rid = self.getAssignParm("rid")      # request ID
+        self._cid = self.getAssignParm("cid")      # client ID
+        self._tid = self.getAssignParm("tid")      # task ID
         self._clients = kwargs.get("clients","").split(",")
         self._pollPeriod = float( kwargs.get("pollPeriod", 1.0) )
 
@@ -69,14 +70,18 @@ class TaskHandle:
         return self._rid
 
     @property
-    def cid(self):                        # request ID
+    def cid(self):                        # client ID
         return self._cid
 
     @property
-    def messages(self) -> RequestMetadata:
-        return messageCenter.request( self._rid )
+    def tid(self):                        # task ID
+        return self._tid
 
-    def getAssignParm(self, key: str, plen = 6 ) -> str :
+    @property
+    def messages(self) -> RequestMetadata:
+        return messageCenter.request( self._tid )
+
+    def getAssignParm(self, key: str ) -> str :
         return self._parms.get( key, Endpoint.randomStr(6) )
 
     def hasClient(self, cid: str ) -> bool:
@@ -109,28 +114,6 @@ class TaskHandle:
     def __str__(self) -> str:
         items = dict( rid=self._rid, cid=self._cid, status=self.status())
         return f"{self.__class__.__name__}{str(items)}"
-
-class TaskFuture(TaskHandle):
-
-    def __init__( self, future: Future, **kwargs ):
-        TaskHandle.__init__(self, **kwargs)
-        self._future = future
-
-    def getResult( self, **kwargs ) ->  Optional[TaskResult]:
-        return self._future.result() if self._future.done() else None
-
-    def cancel(self):
-        self._future.cancel()
-
-    def exception(self) -> Optional[Exception]:
-        return self._future.exception()
-
-    def status(self) ->  Status:
-        if self._future.done():
-            if self._future.exception() is not None:  return Status.ERROR
-            elif self._future.cancelled():            return Status.CANCELED
-            else:                                     return Status.COMPLETED
-        else: return Status.EXECUTING
 
 class FailedTask(TaskHandle):
 
