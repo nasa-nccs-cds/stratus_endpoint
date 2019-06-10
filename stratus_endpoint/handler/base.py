@@ -2,6 +2,7 @@ import json, string, random, abc, time
 from enum import Enum, auto
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional, Iterable
 from stratus_endpoint.util.config import StratusLogger
+from stratus_endpoint.util.messaging import *
 import xarray as xa
 from concurrent.futures import Future
 
@@ -101,6 +102,10 @@ class TaskHandle:
     def cid(self):                        # request ID
         return self._cid
 
+    @property
+    def messages(self) -> RequestMetadata:
+        return messageCemter.request( self._rid )
+
     def getAssignParm(self, key: str, plen = 6 ) -> str :
         return self._parms.get( key, Endpoint.randomStr(6) )
 
@@ -124,10 +129,12 @@ class TaskHandle:
             time.sleep( 0.2 )
 
     @abc.abstractmethod
-    def status(self) ->  Status: pass
+    def status(self) ->  Status:
+        return self.messages.status
 
     @abc.abstractmethod
-    def exception(self) -> Optional[Exception]: pass
+    def exception(self) -> Optional[ErrorRecord]:
+        return self.messages.error
 
     def __getitem__( self, key: str ) -> str: return self._parms.get( key, None )
 
