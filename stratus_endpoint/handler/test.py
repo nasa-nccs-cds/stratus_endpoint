@@ -31,7 +31,7 @@ class TestTask(TaskHandle):
 
     def __init__( self, workTime: float, **kwargs ):
         self._parms = kwargs
-        TaskHandle.__init__(self, **kwargs )
+        TaskHandle.__init__(self, 'tid1', 'rid1', 'cid1', **kwargs )
         self._workTime = workTime
         self._startTime = time.time()
         self._status = Status.EXECUTING

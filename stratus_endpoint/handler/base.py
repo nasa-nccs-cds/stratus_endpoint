@@ -56,12 +56,12 @@ class TaskResult:
 class TaskHandle:
     __metaclass__ = abc.ABCMeta
 
-    def __init__( self, **kwargs ):
+    def __init__( self, tid: str, rid: str, cid: str, **kwargs ):
         self.logger = StratusLogger.getLogger()
         self._parms = kwargs
-        self._rid = self.getAssignParm("rid")      # request ID
-        self._cid = self.getAssignParm("cid")      # client ID
-        self._tid = self.getAssignParm("tid")      # task ID
+        self._rid = rid      # request ID
+        self._cid = cid      # client ID
+        self._tid = tid      # task ID
         self._clients = kwargs.get("clients","").split(",")
         self._pollPeriod = float( kwargs.get("pollPeriod", 1.0) )
 
@@ -117,8 +117,8 @@ class TaskHandle:
 
 class FailedTask(TaskHandle):
 
-    def __init__( self, exception: Exception, **kwargs ):
-        TaskHandle.__init__(self, **kwargs)
+    def __init__( self, tid: str, rid: str, cid: str, exception: Exception, **kwargs ):
+        TaskHandle.__init__(self, tid, rid, cid, **kwargs)
         self.logger.info( f"FailedTask: exception = {exception}")
         self._exception = exception
 
