@@ -1,4 +1,5 @@
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Optional
+from stratus_endpoint.util.config import StratusLogger
 import traceback
 from enum import Enum, auto
 
@@ -46,10 +47,12 @@ class ErrorRecord:
 
 class RequestMetadata:
 
-    def __init__(self):
+    def __init__( self, ID: str ):
+        self.logger = StratusLogger.getLogger()
         self._messages = []
         self._error: ErrorRecord = None
         self._status = Status.IDLE
+        self._id = ID
 
     def setError(self, message, traceback=None):
         self.setErrorRecord( ErrorRecord( message, traceback ) )
@@ -59,6 +62,7 @@ class RequestMetadata:
         self._status = Status.ERROR
 
     def setStatus(self, status: Status ):
+        self.logger.info( f"RequestMetadata[{self._id}] Set Status: {status} ")
         self._status = status
 
     def setException(self, ex: Exception ):
@@ -84,8 +88,8 @@ class MessageCenter:
     def __init__(self):
         self._requestRecs = {}
 
-    def request(self, rid: str ) -> RequestMetadata:
-        return self._requestRecs.setdefault( rid, RequestMetadata() )
+    def request(self, ID: str ) -> RequestMetadata:
+        return self._requestRecs.setdefault( ID, RequestMetadata(ID) )
 
     def clear( self, rid: str ):
         try: del self._requestRecs[rid]
