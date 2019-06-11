@@ -28,7 +28,9 @@ class Status(Enum):
 
     @classmethod
     def str( cls, _stat: "Status" ) -> str:
-        return str(_stat).lower().split(".")[1]
+        sstr = str(_stat).lower()
+        try: return sstr.split(".")[1]
+        except: return sstr
 
 class ErrorRecord:
 
