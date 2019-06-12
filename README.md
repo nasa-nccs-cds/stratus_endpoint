@@ -30,9 +30,9 @@ positional arguments:
 
 optional arguments:
   -h, --help      show this help message and exit
-  -path PATH      The top level directory containing all files for the collection
+  -path PATH      The top level (input) data directory containing all files for the collection
+  -cpath CPATH    The (output) collections directory, containing the generated collection definitions, defaults to $HPDA_COLLECTIONS_DIR
   -ext EXT        The file extension for all files in the collection (used only with '-path', default: nc)
-  -cpath CPATH    The collections directory, containing the generated collection definitions, defaults to $HPDA_COLLECTIONS_DIR
   -globs GLOBS    A comma-separated list of unix file system globs for selecting files in the collection
   -glob GLOB      A single unix file system glob for selecting files in the collection
   -mp MP          Use multiprocessing (true/false), default: true
