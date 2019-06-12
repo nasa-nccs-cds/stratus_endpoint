@@ -15,6 +15,32 @@ These classes wrap python services for integration with other services using Str
  >> python setup.py install
 ```
 
+### Collections
+
+  Use the *cscan* script in the *bin* directory to create collections:
+
+```
+usage: cscan [-h] [-path PATH] [-ext EXT] [-globs GLOBS] [-glob GLOB] [-mp MP]
+             collectionName
+
+Scan the file system to create a collection
+
+positional arguments:
+  collectionName  A name for the collection
+
+optional arguments:
+  -h, --help      show this help message and exit
+  -path PATH      The top level directory containing all files for the
+                  collection
+  -ext EXT        The file extension for all files in the collection (used
+                  only with '-path', default: nc)
+  -globs GLOBS    A comma-separated list of unix file system globs for
+                  selecting files in the collection
+  -glob GLOB      A single unix file system glob for selecting files in the
+                  collection
+  -mp MP          Use multiprocessing (true/fal
+```
+
 ##### Developer Notes: Uploading to PyPi
 
 ```
