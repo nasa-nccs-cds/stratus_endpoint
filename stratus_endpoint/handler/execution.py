@@ -8,12 +8,12 @@ import abc, string, random, xarray as xa
 class Executable:
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, rid: str, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ):
+    def __init__(self, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ):
         self.parms = kwargs
         self.logger =  StratusLogger.getLogger()
         self.request = requestSpec
         self.inputs = inputs
-        self.requestId = rid
+        self.requestId = kwargs.get( "rid", self.randomStr(4) )
 
     @staticmethod
     def randomStr(length) -> str:
@@ -107,16 +107,15 @@ class TaskExecHandler(TaskHandle):
 class ExecEndpoint(Endpoint):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, exec_class: Callable, **kwargs ):
+    def __init__(self, **kwargs ):
         Endpoint.__init__( self, **kwargs )
-        self.execClass = exec_class
         self.handlers: Dict[str,TaskHandle] = {}
 
     def request(self, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ) -> TaskHandle:
         rid: str = kwargs.get('rid', Executable.randomStr(4))
         cid: str = kwargs.get('cid', Executable.randomStr(4))
         self.logger.info(f"EDAS Endpoint--> processing rid {rid}")
-        executable = self.createExecutable( rid, requestSpec, inputs, **kwargs )
+        executable = self.createExecutable( requestSpec, inputs, **kwargs )
         handler = TaskExecHandler( cid, executable, **kwargs )
         handler.start()
         self.handlers[rid] = handler
@@ -126,4 +125,4 @@ class ExecEndpoint(Endpoint):
         return self.handlers.get(rid)
 
     @abc.abstractmethod
-    def createExecutable( self, rid: str, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ) -> Executable: pass
+    def createExecutable( self, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ) -> Executable: pass
