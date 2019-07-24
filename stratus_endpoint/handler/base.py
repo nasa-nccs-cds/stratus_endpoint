@@ -2,7 +2,6 @@ import json, string, random, abc, time
 from enum import Enum, auto
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional, Iterable
 from stratus_endpoint.util.config import StratusLogger
-from stratus_endpoint.handler.execution import Executable
 import xarray as xa
 from concurrent.futures import Future
 
