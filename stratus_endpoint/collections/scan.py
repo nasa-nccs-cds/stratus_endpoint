@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional
 from netCDF4 import Dataset, num2date, Variable
 from functools import total_ordering
-import os, glob, yaml, cftime, datetime, argparse, math, time
+import os, glob, yaml, datetime, argparse, math, time
 import multiprocessing as mp
 from multiprocessing import Pool
 
@@ -24,16 +24,16 @@ class FileRec:
         time_data = time_var[:]
         if len(time_data) > 1:
             dt = time_data[1] - time_data[0]
-            self.start_date: cftime.real_datetime = num2date(time_data[0], time_var.units, self.calendar)
-            self.end_date: cftime.real_datetime = num2date(time_data[-1] + dt, time_var.units, self.calendar)
+            self.start_date = num2date(time_data[0], time_var.units, self.calendar)
+            self.end_date = num2date(time_data[-1] + dt, time_var.units, self.calendar)
         else:
-            self.start_date: cftime.real_datetime = num2date(time_data[0], time_var.units, self.calendar)
-            self.end_date: cftime.real_datetime = self.start_date
+            self.start_date = num2date(time_data[0], time_var.units, self.calendar)
+            self.end_date = self.start_date
         self.start_time_value = self.getTimeValue( self.start_date )
         self.end_time_value = self.getTimeValue( self.end_date )
         self.size = len(time_data)
 
-    def getTimeValue(self, date: cftime.real_datetime) -> int:
+    def getTimeValue( self, date ) -> int:
         offset = date - self.base_date
         return offset.days * 24 * 60 + int(round(offset.seconds/60))
 
