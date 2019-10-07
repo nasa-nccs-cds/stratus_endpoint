@@ -1,4 +1,4 @@
-import json, string, random, abc, time
+import json, string, random, abc, time, traceback
 from enum import Enum, auto
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional, Iterable
 from stratus_endpoint.util.config import StratusLogger
@@ -161,7 +161,8 @@ class FailedTask(TaskHandle):
 
     def __init__( self, exception: Exception, **kwargs ):
         TaskHandle.__init__(self, **kwargs)
-        self.logger.info( f"FailedTask: exception = {exception}")
+        self.logger.error( f"FailedTask: exception = {exception}")
+        self.logger.error( traceback.format_exception( type(exception), exception, exception.__traceback__ ) )
         self._exception = exception
 
     def getResult( self, **kwargs ) ->  Optional[TaskResult]:

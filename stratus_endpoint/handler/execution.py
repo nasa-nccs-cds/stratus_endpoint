@@ -107,16 +107,21 @@ class TaskExecHandler(TaskHandle):
 class ExecEndpoint(Endpoint):
     __metaclass__ = abc.ABCMeta
 
+    """
+        This class is used to implement the capabilities of the Endpoint.
+    """
+
     def __init__(self, **kwargs ):
         Endpoint.__init__( self, **kwargs )
         self.handlers: Dict[str,TaskHandle] = {}
 
     def request(self, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ) -> TaskHandle:
-        rid: str = kwargs.get('rid', Executable.randomStr(4))
-        cid: str = kwargs.get('cid', Executable.randomStr(4))
+        parms = { **kwargs }
+        rid: str = parms.pop('rid', Executable.randomStr(4))
+        cid: str = parms.pop('cid', Executable.randomStr(4))
         self.logger.info(f"EDAS Endpoint--> processing rid {rid}")
-        executable = self.createExecutable( requestSpec, inputs, **kwargs )
-        handler = TaskExecHandler( cid, executable, **kwargs )
+        executable = self.createExecutable( requestSpec, inputs, **parms )
+        handler = TaskExecHandler( cid, executable, **parms )
         handler.start()
         self.handlers[rid] = handler
         return handler
@@ -126,3 +131,15 @@ class ExecEndpoint(Endpoint):
 
     @abc.abstractmethod
     def createExecutable( self, requestSpec: Dict, inputs: List[TaskResult] = None, **kwargs ) -> Executable: pass
+
+    """
+        Factory method for Executable objects.
+        Creates an Executable for each analytics operation
+
+        Parameters:
+        requestSpec (Dict):         Dict which defines the analytics operation
+        inputs: (List[TaskResult]): Inputs from other operations in the workflow
+
+        Returns:
+        Executable: A Executable object which execute the operation.
+        """
