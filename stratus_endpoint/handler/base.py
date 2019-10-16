@@ -1,9 +1,11 @@
 import json, string, random, abc, time, traceback
 from enum import Enum, auto
-from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional, Iterable
+from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional, Iterable, Union
 from stratus_endpoint.util.config import StratusLogger
 import xarray as xa
 from concurrent.futures import Future
+
+logger = StratusLogger.getLogger()
 
 class Status(Enum):
     IDLE = auto()
@@ -14,7 +16,8 @@ class Status(Enum):
     UNKNOWN = auto()
 
     @classmethod
-    def decode( cls, _stat: str ) -> "Status":
+    def decode( cls, statusMsg: Union[str,Dict] ) -> "Status":
+        _stat = statusMsg["status"] if isinstance( statusMsg, dict ) else statusMsg
         toks = _stat.split(".")
         if len( toks ) > 1:
             assert toks[0].upper() == "STATUS", "Status: attempt to decode a str that is not a status: " + _stat
