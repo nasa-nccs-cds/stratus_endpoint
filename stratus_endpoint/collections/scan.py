@@ -89,7 +89,7 @@ class  FileScanner:
             self.varPaths.setdefault(frec.varsKey, []).append(frec)
         for varKey, frecList in self.varPaths.items():
             frecList.sort()
-            base = os.path.commonprefix([os.path.dirname(frec.path) for frec in frecList])
+            base = os.path.dirname( os.path.commonprefix([os.path.dirname(frec.path) for frec in frecList]) )
             size = 0
             for frec in frecList:
                 size += frec.size
