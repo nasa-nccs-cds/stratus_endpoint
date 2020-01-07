@@ -21,6 +21,7 @@ class FileRec:
         vars_list.sort()
         self.varsKey = ",".join(vars_list)
         time_var: Variable = dataset.variables["time"]
+        if "months since" in time_var.units: self.calendar = "360_day"
         time_data = time_var[:]
         if len(time_data) > 1:
             dt = time_data[1] - time_data[0]
