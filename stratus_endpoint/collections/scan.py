@@ -189,7 +189,9 @@ class Aggregation:
     def process(self):
         dataset: Dataset = Dataset(self.filePath())
         calendar: str = self.attr( dataset, "calendar", "standard" )
-        nc_dims: List[str] = [dim for dim in dataset.dimensions]
+        nc_dims: List[str] = [dim for dim in dataset.dimensions ]
+        nc_bounds: List[str] = [ f"{dim}_bnds" for dim in nc_dims ]
+        aux_vars = nc_dims + nc_bounds
         nc_vars: List[str] = [var for var in dataset.variables]
         lines: List[str] = []
         resolution = dict()
@@ -223,7 +225,7 @@ class Aggregation:
                     elif lvname.startswith("lev") or lvname.startswith("plev"): ctype = "Z"
                     lines.append(f'A; {vname}; {vname}; {ctype}; {",".join(shape)}; {units}; {cdata[0]}; {cdata[-1]}\n')
         for vname in nc_vars:
-            if vname not in nc_dims:
+            if vname not in aux_vars:
                 self.vars.add(vname)
                 var: Variable = dataset.variables[vname]
                 long_name = self.attr( var, "long_name", vname )
