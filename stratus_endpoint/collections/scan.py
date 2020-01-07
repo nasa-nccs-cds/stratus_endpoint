@@ -15,13 +15,13 @@ class FileRec:
         dataset = Dataset(path)
         self.units = "minutes since 1970-01-01T00:00:00Z"
         self.relPath = None
-        self.base_date = datetime.datetime(1970,1,1,1,1,1)
         self.calendar = dataset.calendar if hasattr(dataset, 'calendar') else "standard"
         vars_list = list(dataset.variables.keys())
         vars_list.sort()
         self.varsKey = ",".join(vars_list)
         time_var: Variable = dataset.variables["time"]
         if "months since" in time_var.units: self.calendar = "360_day"
+        self.base_date = datetime.datetime(1970, 1, 1, 1, 1, 1)
         time_data = time_var[:]
         if len(time_data) > 1:
             dt = time_data[1] - time_data[0]
@@ -34,9 +34,13 @@ class FileRec:
         self.end_time_value = self.getTimeValue( self.end_date )
         self.size = len(time_data)
 
-    def getTimeValue( self, date ) -> int:
-        offset = date - self.base_date
-        return offset.days * 24 * 60 + int(round(offset.seconds/60))
+    def getTimeValue( self, date: datetime ) -> int:
+        if self.calendar == "360_day":
+            months = date.year - 1970 + ( date.month - 1 )
+            return months * 30 * 24 * 60
+        else:
+            offset = date - self.base_date
+            return offset.days * 24 * 60 + int(round(offset.seconds/60))
 
     def setBase(self, base: str ):
         self.relPath = self.path[len(base):]
