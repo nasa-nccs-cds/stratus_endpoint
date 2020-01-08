@@ -36,7 +36,10 @@ class FileRec:
             self.end_time_value = self.getTimeValue( self.end_date )
             self.size = len(time_data)
         except Exception as err:
-            print(f"Error Opening dataset {path}: {err}")
+            print(f"\n ***** Error Opening file {path}: {err} \n")
+            f = open( "/tmp/cscan_bad_files.txt","a+")
+            f.write( f"{path}: {err}" )
+            f.close()
 
 
     def getTimeValue( self, date: datetime ) -> int:
