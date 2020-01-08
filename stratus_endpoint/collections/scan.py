@@ -12,27 +12,32 @@ def m2s( params: Dict ) -> str:
 class FileRec:
     def __init__(self, path ):
         self.path = path
-        dataset = Dataset(path)
         self.units = "minutes since 1970-01-01T00:00:00Z"
-        self.relPath = None
-        self.calendar = dataset.calendar if hasattr(dataset, 'calendar') else "standard"
-        vars_list = list(dataset.variables.keys())
-        vars_list.sort()
-        self.varsKey = ",".join(vars_list)
-        time_var: Variable = dataset.variables["time"]
-        if "months since" in time_var.units: self.calendar = "360_day"
         self.base_date = datetime.datetime(1970, 1, 1, 1, 1, 1)
-        time_data = time_var[:]
-        if len(time_data) > 1:
-            dt = time_data[1] - time_data[0]
-            self.start_date = num2date(time_data[0], time_var.units, self.calendar)
-            self.end_date = num2date(time_data[-1] + dt, time_var.units, self.calendar)
-        else:
-            self.start_date = num2date(time_data[0], time_var.units, self.calendar)
-            self.end_date = self.start_date
-        self.start_time_value = self.getTimeValue( self.start_date )
-        self.end_time_value = self.getTimeValue( self.end_date )
-        self.size = len(time_data)
+        self.relPath = None
+        self.varsKey = None
+        try:
+            dataset = Dataset(path)
+            self.calendar = dataset.calendar if hasattr(dataset, 'calendar') else "standard"
+            vars_list = list(dataset.variables.keys())
+            vars_list.sort()
+            self.varsKey = ",".join(vars_list)
+            time_var: Variable = dataset.variables["time"]
+            if "months since" in time_var.units: self.calendar = "360_day"
+            time_data = time_var[:]
+            if len(time_data) > 1:
+                dt = time_data[1] - time_data[0]
+                self.start_date = num2date(time_data[0], time_var.units, self.calendar)
+                self.end_date = num2date(time_data[-1] + dt, time_var.units, self.calendar)
+            else:
+                self.start_date = num2date(time_data[0], time_var.units, self.calendar)
+                self.end_date = self.start_date
+            self.start_time_value = self.getTimeValue( self.start_date )
+            self.end_time_value = self.getTimeValue( self.end_date )
+            self.size = len(time_data)
+        except Exception as err:
+            print(f"Error Opening dataset {path}: {err}")
+
 
     def getTimeValue( self, date: datetime ) -> int:
         if self.calendar == "360_day":
@@ -86,7 +91,8 @@ class  FileScanner:
         else:
             frecList = [ FileRec(path) for path in paths ]
         for frec in frecList:
-            self.varPaths.setdefault(frec.varsKey, []).append(frec)
+            if frec.varsKey:
+                self.varPaths.setdefault(frec.varsKey, []).append(frec)
         for varKey, frecList in self.varPaths.items():
             frecList.sort()
             base = os.path.dirname( os.path.commonprefix([os.path.dirname(frec.path) for frec in frecList]) )
