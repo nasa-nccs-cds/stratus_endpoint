@@ -120,15 +120,12 @@ class  FileScanner:
         os.makedirs( baseDir, exist_ok=True )
         collectionsFile = f"{baseDir}/{self.collectionId}.csv"
         print(" Writing collection file: " + collectionsFile )
-        lines = []
+        lines = [ f"# title, {self.collectionId}\n", f"# dir, {baseDir}\n", f"# format, ag1\n" ]
         with open( collectionsFile, 'w' ) as f:
             for aggId,agg in self.aggs.items():
                 aggFile = f"{baseDir}/{agg.getId(self.collectionId)}.ag1"
                 print(" Writing agg File: " + aggFile)
                 agg.write( aggFile )
-                lines.append(f"# title, {self.collectionId}\n")
-                lines.append(f"# dir, {baseDir}\n")
-                lines.append(f"# format, ag1\n")
                 for var in agg.vars:
                     relPath = os.path.splitext( os.path.relpath(aggFile, baseDir) )[0]
                     lines.append( f"{var}, {relPath}\n")
