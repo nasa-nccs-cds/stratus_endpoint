@@ -239,7 +239,7 @@ class Aggregation:
                 units = self.attr(var, "units")
                 dims = var.dimensions
                 shape = [ str(self.nTs) if dims[iDim] == "time" else str(var.shape[iDim]) for iDim in range(len(dims)) ]
-                if not shape: shape = [0]
+                if not shape: shape = ['0']
                 lines.append(f'V; {vname}; {long_name}; {long_name}; {comments}; {",".join(shape)}; {m2s(resolution)}; {" ".join(dims)}; {units}\n')
         for frec in self.fileRecs:
             lines.append(f'F; {frec.start_time_value}; {frec.size}; {frec.relPath}\n')
