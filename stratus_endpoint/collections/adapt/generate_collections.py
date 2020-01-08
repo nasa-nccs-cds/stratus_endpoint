@@ -25,9 +25,8 @@ def process_collection( collection_spec: Dict ):
 
 
 t0 = time.time()
-nproc = 2*mp.cpu_count()
-with Pool(processes=nproc) as pool:
-    pool.map( process_collection, collection_specs )
 
+for collection_spec in collection_specs:
+    process_collection(collection_spec)
 
 print( f"Completed collection generation in {(time.time()-t0)/60.0} minutes")
