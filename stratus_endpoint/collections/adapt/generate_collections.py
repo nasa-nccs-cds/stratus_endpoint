@@ -10,10 +10,31 @@ regen_colls = [ "merra2", "cip" ]
 base_dir = "/nfs4m/css/curated01"
 coll_dir = "/att/pubrepo/ILAB/data/collections/agg"
 
-collection_specs = [
+collection_specs0 = [
     { "cip_merra2": "create-ip/data/reanalysis/NASA-GMAO/GEOS-5/MERRA2/*" },
     { "cip_merra2_asm": "create-ip/data/reanalysis/NASA-GMAO/GEOS-5/MERRA2/*" },
     { "merra2": "/merra2/data/*" }
+]
+
+collection_specs1 = [
+    { "noaa_ncep_cfsr": "create-ip/data/reanalysis/NOAA-NCEP/CFSR/*" },
+    { "noaa_ncep_mom3": "create-ip/data/reanalysis/NOAA-NCEP/MOM3/*" },
+    { "noaa_gfdl_mom4": "create-ip/data/reanalysis/NOAA-GFDL/MOM4/ECDAv31/*"},
+    { "noaa_esrl+cires": "create-ip/data/reanalysis/NOAA-ESRLandCIRES/ensda-v351/20CRv2c/*"},
+    { "ecmwf_ifs_erai": "create-ip/data/reanalysis/ECMWF/IFS-Cy31r2/ERA-Interim/*"},
+    { "ecmwf_ifs_era5": "create-ip/data/reanalysis/ECMWF/IFS-Cy41r2/ERA5/*"},
+    { "ecmwf_ifs_cera": "create-ip/data/reanalysis/ECMWF/IFS-Cy41r2/CERA-20C/*"},
+    { "ecmwf_nemo_oras4":    "create-ip/data/reanalysis/ECMWF/NEMOv3/ORAS4/*"},
+    { "ecmwf_nemo_orap5":    "create-ip/data/reanalysis/ECMWF/NEMOv34+LIM2/ORAP5/*"},
+    { "jma_jra35":      "create-ip/data/reanalysis/JMA/JRA-25/*"},
+    { "jma_jra55":      "create-ip/data/reanalysis/JMA/JRA-55/*"},
+    { "jma_jra55_mdl_iso": "create-ip/data/reanalysis/JMA/JRA-55-mdl-iso/*"},
+    { "cmcc_nemo+lim2": "create-ip/data/reanalysis/CMCC/NEMOv32+LIM2/C-GLORSv5/*"},
+    { "iap-ua_ccsm-cam_era40": "create-ip/data/reanalysis/IAP-UA/CCSM-CAM/ERA40-CRUTS3-10/*"},
+    { "iap-ua_ccsm_era40": "create-ip/data/reanalysis/IAP-UA/CCSM-CAM/ERA40-CRUTS3-10/*"},
+    { "iap-ua_ncep-gom_cruts3": "create-ip/data/reanalysis/IAP-UA/NCEP-Global-Operational-Model/NCEP-NCAR-CRUTS3-10/*"},
+    { "uh-mitgcm_gecco2": "create-ip/data/reanalysis/University-Hamburg/MITgcm/GECCO2/*"},
+
 ]
 
 def process_collection( collection_spec: Dict ):
@@ -26,7 +47,7 @@ def process_collection( collection_spec: Dict ):
 
 t0 = time.time()
 
-for collection_spec in collection_specs:
+for collection_spec in collection_specs1:
     process_collection(collection_spec)
 
 print( f"Completed collection generation in {(time.time()-t0)/60.0} minutes")
