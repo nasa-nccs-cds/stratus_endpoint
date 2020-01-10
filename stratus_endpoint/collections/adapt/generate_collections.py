@@ -42,7 +42,7 @@ def process_collection( collection_spec: Dict ):
     for collId, file_paths in collection_spec.items():
         for collDir in glob(f"{base_dir}/{file_paths}"):
             collName = os.path.basename(collDir).lower()
-            scanner2 = FileScanner( f"{collId}_{collName}", path=collDir, ext="{nc,nc4}" )
+            scanner2 = FileScanner( f"{collId}_{collName}", path=collDir, ext="nc4" )
             scanner2.write( coll_dir )
 
 t0 = time.time()
