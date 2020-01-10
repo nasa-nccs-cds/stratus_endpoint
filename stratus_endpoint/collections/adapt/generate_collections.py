@@ -33,8 +33,11 @@ collection_specs1 = [
     { "iap-ua_ccsm-cam_era40": "create-ip/data/reanalysis/IAP-UA/CCSM-CAM/ERA40-CRUTS3-10/*"},
     { "iap-ua_ccsm_era40": "create-ip/data/reanalysis/IAP-UA/CCSM-CAM/ERA40-CRUTS3-10/*"},
     { "iap-ua_ncep-gom_cruts3": "create-ip/data/reanalysis/IAP-UA/NCEP-Global-Operational-Model/NCEP-NCAR-CRUTS3-10/*"},
-    { "uh-mitgcm_gecco2": "create-ip/data/reanalysis/University-Hamburg/MITgcm/GECCO2/*"},
+    { "uh-mitgcm_gecco2": "create-ip/data/reanalysis/University-Hamburg/MITgcm/GECCO2/*"}
+]
 
+collection_specs2 = [
+    { "merra2": "/merra2/data/M2T1NXLND*" }
 ]
 
 def process_collection( collection_spec: Dict ):
@@ -44,10 +47,9 @@ def process_collection( collection_spec: Dict ):
             scanner2 = FileScanner( f"{collId}_{collName}", path=collDir, ext="nc" )
             scanner2.write( coll_dir )
 
-
 t0 = time.time()
 
-for collection_spec in collection_specs1:
+for collection_spec in collection_specs2:
     process_collection(collection_spec)
 
 print( f"Completed collection generation in {(time.time()-t0)/60.0} minutes")
