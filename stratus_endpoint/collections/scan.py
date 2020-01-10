@@ -97,14 +97,18 @@ class  FileScanner:
             if frec.varsKey:
                 self.varPaths.setdefault(frec.varsKey, []).append(frec)
         for varKey, frecList in self.varPaths.items():
-            frecList.sort()
-            base = os.path.dirname( os.path.commonprefix([os.path.dirname(frec.path) for frec in frecList]) )
-            size = 0
-            for frec in frecList:
-                size += frec.size
-                frec.setBase(base)
-            agg = Aggregation(base, frecList, size)
-            self.aggs[varKey] = agg
+            try:
+                frecList.sort()
+                base = os.path.dirname( os.path.commonprefix([os.path.dirname(frec.path) for frec in frecList]) )
+                size = 0
+                for frec in frecList:
+                    size += frec.size
+                    frec.setBase(base)
+                agg = Aggregation(base, frecList, size)
+                self.aggs[varKey] = agg
+            except Exception as err:
+                print( f"\n *** Error Creating aggregation {varKey}: {err} \n ")
+
         print(" Completed file scan in " + str(time.time() - t0) + " seconds")
 
     def scan( self, **kwargs ):
