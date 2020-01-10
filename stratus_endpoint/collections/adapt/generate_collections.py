@@ -35,7 +35,7 @@ collection_specs1 = [
 ]
 
 collection_specs2 = [
-    { "merra2": "/merra2/data/M2T1NXLND*" }
+    { "merra2": "/merra2/data/M2T1NXINT*" }
 ]
 
 def process_collection( collection_spec: Dict ):
