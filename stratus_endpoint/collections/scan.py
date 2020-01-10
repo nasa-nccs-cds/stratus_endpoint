@@ -125,7 +125,8 @@ class  FileScanner:
                     globs.append(glob2)
         if len(globs) > 0:
             print( "Scanning globs:" + str(globs) )
-            paths = glob.glob( *globs, recursive=True)
+            paths = []
+            for glob1 in globs: paths.extend( glob.glob( glob1, recursive=True) )
             self.processPaths( paths, **kwargs )
         else: raise Exception( "No files found")
 
