@@ -2,8 +2,6 @@ from stratus_endpoint.collections.scan import FileScanner
 from typing import List, Dict, Any, Sequence, BinaryIO, TextIO, ValuesView, Tuple, Optional, Iterable, Union
 from glob import glob
 import os, time, math
-import multiprocessing as mp
-from multiprocessing import Pool
 
 regen_colls = [ "merra2", "cip" ]
 
@@ -44,7 +42,7 @@ def process_collection( collection_spec: Dict ):
     for collId, file_paths in collection_spec.items():
         for collDir in glob(f"{base_dir}/{file_paths}"):
             collName = os.path.basename(collDir).lower()
-            scanner2 = FileScanner( f"{collId}_{collName}", path=collDir, ext="nc" )
+            scanner2 = FileScanner( f"{collId}_{collName}", path=collDir, ext="{nc,nc4}" )
             scanner2.write( coll_dir )
 
 t0 = time.time()
