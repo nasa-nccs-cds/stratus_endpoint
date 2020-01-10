@@ -114,10 +114,15 @@ class  FileScanner:
         if glob1 is not None: globs.append(glob1)
         path = kwargs.get("path",None)
         if path is not None:
-            ext = kwargs.get("ext", None)
-            if ext[0] == ".": ext = ext[1:]
-            glob2 = path + "/**" if ext is None else path + "/**/*." + ext
-            globs.append(glob2)
+            exts = kwargs.get( "ext", None )
+            if exts is None:
+                globs.append( path + "/**" )
+            else:
+                if not isinstance( exts, list ): exts = [exts]
+                for ext in exts:
+                    if ext[0] == ".": ext = ext[1:]
+                    glob2 = path + "/**/*." + ext
+                    globs.append(glob2)
         if len(globs) > 0:
             print( "Scanning globs:" + str(globs) )
             paths = glob.glob( *globs, recursive=True)
