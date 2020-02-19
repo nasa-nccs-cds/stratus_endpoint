@@ -70,6 +70,28 @@ class FileTester:
 
         return errors
 
+if __name__ == "__main__":
+
+    test_collection = "merra2"
+    fileTester = None
+
+    if test_collection == "merra2":
+        base_dirs = "/css/merra2/data/*"
+        suffix = ".nc4"
+        fileTester = FileTester("merra2", suffix)
+
+    elif test_collection == "aviris":
+        base_dirs = "/att/pubrepo/ABoVE/archived_data/ORNL/ABoVE_Airborne_AVIRIS_NG/data/*"
+        suffix = "_img"
+        engine = "rasterio"
+        fileTester = FileTester("aviris", suffix, engine=engine, clean=True)
+
+    elif test_collection == "cip":
+        base_dirs = "/css/create-ip/data/*"
+        suffix = ".nc"
+        fileTester = FileTester("cip", suffix, clean=True)
+
+    else: raise Exception( f"Unknown Test collection: {test_collection}" )
 
 
-
+    fileTester.search(base_dirs)
