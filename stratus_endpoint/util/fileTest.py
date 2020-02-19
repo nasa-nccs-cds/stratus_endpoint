@@ -83,8 +83,7 @@ if __name__ == "__main__":
     elif test_collection == "aviris":
         base_dirs = "/att/pubrepo/ABoVE/archived_data/ORNL/ABoVE_Airborne_AVIRIS_NG/data/*"
         suffix = "_img"
-        engine = "rasterio"
-        fileTester = FileTester("aviris", suffix, engine=engine, clean=True)
+        fileTester = FileTester("aviris", suffix, engine="rasterio", clean=True)
 
     elif test_collection == "cip":
         base_dirs = "/css/create-ip/data/*"
